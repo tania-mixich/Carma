@@ -1,0 +1,6 @@
+@Carma.API_HostAddress = http://localhost:5291
+
+GET {{Carma.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

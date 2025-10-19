@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carma.API", "Carma.API\Carma.API.csproj", "{59897929-46D9-4E33-BD6A-D82CF7D6CCE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carma.Application", "Carma.Application\Carma.Application.csproj", "{541F32A5-6FA4-4765-928F-62369A2F4780}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carma.Domain", "Carma.Domain\Carma.Domain.csproj", "{6A27E395-D987-41EB-A1F0-71D4601E6469}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carma.Infrastructure", "Carma.Infrastructure\Carma.Infrastructure.csproj", "{006C6570-9203-4B6C-8132-9B774AF445BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59897929-46D9-4E33-BD6A-D82CF7D6CCE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59897929-46D9-4E33-BD6A-D82CF7D6CCE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59897929-46D9-4E33-BD6A-D82CF7D6CCE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59897929-46D9-4E33-BD6A-D82CF7D6CCE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{541F32A5-6FA4-4765-928F-62369A2F4780}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{541F32A5-6FA4-4765-928F-62369A2F4780}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{541F32A5-6FA4-4765-928F-62369A2F4780}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{541F32A5-6FA4-4765-928F-62369A2F4780}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A27E395-D987-41EB-A1F0-71D4601E6469}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A27E395-D987-41EB-A1F0-71D4601E6469}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A27E395-D987-41EB-A1F0-71D4601E6469}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A27E395-D987-41EB-A1F0-71D4601E6469}.Release|Any CPU.Build.0 = Release|Any CPU
+		{006C6570-9203-4B6C-8132-9B774AF445BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{006C6570-9203-4B6C-8132-9B774AF445BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{006C6570-9203-4B6C-8132-9B774AF445BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{006C6570-9203-4B6C-8132-9B774AF445BC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
