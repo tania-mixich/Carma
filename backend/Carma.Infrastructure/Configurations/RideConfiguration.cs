@@ -12,43 +12,43 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
         builder.ToTable("Rides");
         builder.HasKey(r => r.Id);
         
-        builder.Property(r => r.CreatedAt).HasDefaultValueSql("NOW()");
-        builder.Property(r => r.UpdatedAt).HasDefaultValueSql("NOW()");
+        builder.Property(r => r.CreatedAt).IsRequired();
+        builder.Property(r => r.UpdatedAt).IsRequired();
         builder.Property(r => r.AvailableSeats).IsRequired();
-        builder.Property(r => r.Status).HasDefaultValue(Status.Available);
+        builder.Property(r => r.Status).HasDefaultValue(Status.Available)
+            .HasConversion<string>()
+            .HasMaxLength(50);
         builder.Property(r => r.Price).IsRequired();
         builder.Property(r => r.PickupTime).IsRequired();
 
         builder.OwnsOne(r => r.PickupLocation, location =>
         {
-            location.Property(l => l.Latitude)
-                .HasColumnName("PickupLatitude")
-                .IsRequired();
-
-            location.Property(l => l.Longitude)
-                .HasColumnName("PickupLongitude")
-                .IsRequired();
-            
             location.Property(l => l.Address)
                 .HasColumnName("PickupAddress")
-                .IsRequired()
                 .HasMaxLength(255);
+
+            location.Property(l => l.Coordinate)
+                .HasColumnName("PickupCoordinate")
+                .IsRequired()
+                .HasColumnType("geography(Point, 4326)");
+            
+            location.HasIndex(l => l.Coordinate)
+                .HasMethod("gist");
         });
 
         builder.OwnsOne(r => r.DropOffLocation, location =>
         {
-            location.Property(l => l.Latitude)
-                .HasColumnName("DropOffLatitude")
-                .IsRequired();
-            
-            location.Property(l => l.Longitude)
-                .HasColumnName("DropOffLongitude")
-                .IsRequired();
-            
             location.Property(l => l.Address)
                 .HasColumnName("DropOffAddress")
-                .IsRequired()
                 .HasMaxLength(255);
+            
+            location.Property(l => l.Coordinate)
+                .HasColumnName("DropOffCoordinate")
+                .IsRequired()
+                .HasColumnType("geography(Point, 4326)");
+            
+            location.HasIndex(l => l.Coordinate)
+                .HasMethod("gist");
         });
         
         builder.HasOne(r => r.Organizer)

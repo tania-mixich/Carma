@@ -5,19 +5,15 @@ namespace Carma.Application.Mappers;
 
 public static class RideMapper
 {
-    public static Ride MapToRide(RideCreateDto rideCreateDto, User organizer)
+    public static Ride MapToRide(RideCreateDto rideCreateDto)
     {
         return new Ride
         {
-            CreatedAt = rideCreateDto.CreatedAt,
-            UpdatedAt = rideCreateDto.UpdatedAt,
-            PickupLocation = rideCreateDto.PickupLocation,
-            DropOffLocation = rideCreateDto.DropOffLocation,
+            PickupLocation = LocationMapper.MapToLocation(rideCreateDto.PickupLocation),
+            DropOffLocation = LocationMapper.MapToLocation(rideCreateDto.DropOffLocation),
             PickupTime = rideCreateDto.PickupTime,
             Price = rideCreateDto.Price,
-            AvailableSeats = rideCreateDto.AvailableSeats,
-            Status = rideCreateDto.Status,
-            Organizer = organizer
+            AvailableSeats = rideCreateDto.AvailableSeats
         };
     }
 
@@ -25,10 +21,11 @@ public static class RideMapper
     {
         return new RideGetDto
         (
+            ride.Id,
             ride.CreatedAt,
             ride.UpdatedAt,
-            ride.PickupLocation,
-            ride.DropOffLocation,
+            LocationMapper.MapToLocationGetDto(ride.PickupLocation),
+            LocationMapper.MapToLocationGetDto(ride.DropOffLocation),
             ride.PickupTime,
             ride.Price,
             ride.AvailableSeats,

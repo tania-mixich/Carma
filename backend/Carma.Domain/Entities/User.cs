@@ -9,8 +9,8 @@ public class User : IdentityUser<Guid>
     public Location? Location { get; set; }
     public int Karma { get; set; }
     
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     public ICollection<Review> GivenReviews { get; set; } = new List<Review>();
     public ICollection<Review> ReceivedReviews { get; set; } = new List<Review>();

@@ -3,6 +3,7 @@ using System;
 using Carma.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Carma.Infrastructure.Migrations
 {
     [DbContext(typeof(CarmaDbContext))]
-    partial class CarmaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024160936_PostGISSupport")]
+    partial class PostGISSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,7 +39,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -77,7 +82,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -110,7 +117,9 @@ namespace Carma.Infrastructure.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<int>("Karma")
                         .HasColumnType("integer");
@@ -152,7 +161,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<Guid>("OrganizerId")
                         .HasColumnType("uuid");
@@ -171,7 +182,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasDefaultValue("Available");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.HasKey("Id");
 
@@ -197,7 +210,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("RideRole")
                         .IsRequired()
@@ -227,7 +242,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -274,7 +291,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -499,6 +518,7 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("DropOffAddress");
@@ -526,6 +546,7 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("PickupAddress");
@@ -536,10 +557,6 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnName("PickupCoordinate");
 
                             b1.HasKey("RideId");
-
-                            b1.HasIndex("Coordinate");
-
-                            NpgsqlIndexBuilderExtensions.HasMethod(b1.HasIndex("Coordinate"), "gist");
 
                             b1.ToTable("Rides");
 

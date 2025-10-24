@@ -13,7 +13,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
         
         builder.Property(r => r.Text).IsRequired().HasMaxLength(255);
         builder.Property(r => r.Karma).IsRequired();
-        builder.Property(r => r.CreatedAt).HasDefaultValueSql("NOW()");
+        builder.Property(r => r.CreatedAt).IsRequired();
         
         builder.HasOne(r => r.Reviewer)
             .WithMany(u => u.GivenReviews)

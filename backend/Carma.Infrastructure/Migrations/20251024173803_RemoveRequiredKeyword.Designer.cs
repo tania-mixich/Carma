@@ -3,6 +3,7 @@ using System;
 using Carma.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Carma.Infrastructure.Migrations
 {
     [DbContext(typeof(CarmaDbContext))]
-    partial class CarmaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024173803_RemoveRequiredKeyword")]
+    partial class RemoveRequiredKeyword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -499,6 +502,7 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("DropOffAddress");
@@ -526,6 +530,7 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("PickupAddress");

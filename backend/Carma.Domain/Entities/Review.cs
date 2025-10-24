@@ -7,11 +7,11 @@ public class Review
     public Guid ReviewedUserId { get; set; }
     public int RideId { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int Karma { get; set; }
     public string Text { get; set; } = string.Empty;
     
-    public required User Reviewer { get; set; }
-    public required User ReviewedUser { get; set; }
-    public required Ride Ride { get; set; }
+    public User? Reviewer { get; set; }
+    public User? ReviewedUser { get; set; }
+    public Ride? Ride { get; set; }
 }

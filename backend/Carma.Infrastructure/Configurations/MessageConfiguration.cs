@@ -12,7 +12,7 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.HasKey(m => m.Id);
         
         builder.Property(m => m.Text).IsRequired().HasMaxLength(255);
-        builder.Property(m => m.SentAt).HasDefaultValueSql("NOW()");
+        builder.Property(m => m.SentAt).IsRequired();
         
         builder.HasOne(m => m.User)
             .WithMany(u => u.Messages)

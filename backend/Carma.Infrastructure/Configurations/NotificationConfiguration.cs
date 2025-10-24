@@ -13,8 +13,11 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         
         builder.Property(n => n.Title).IsRequired().HasMaxLength(100);
         builder.Property(n => n.Message).IsRequired().HasMaxLength(255);
-        builder.Property(n => n.SentAt).HasDefaultValueSql("NOW()");
+        builder.Property(n => n.SentAt).IsRequired();
         builder.Property(n => n.IsRead).HasDefaultValue(false);
+        builder.Property(n => n.Type).HasConversion<string>()
+            .HasMaxLength(50)
+            .IsRequired();
         
         builder.HasOne(n => n.User)
             .WithMany(u => u.Notifications)

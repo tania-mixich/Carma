@@ -2,6 +2,7 @@ using Carma.Application.Abstractions;
 using Carma.Application.Common;
 using Carma.Application.DTOs.Auth;
 using Carma.Domain.Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
 namespace Carma.Application.Services;
@@ -10,18 +11,23 @@ public class AuthService
 {
     private readonly IJwtService _jwtService;
     private readonly UserManager<User> _userManager;
+    private readonly IValidator<RegisterRequestDto> _registerValidator;
+    private readonly IValidator<LoginRequestDto> _loginValidator;
     
-    public AuthService(IJwtService jwtService, UserManager<User> userManager)
+    public AuthService(IJwtService jwtService, UserManager<User> userManager, IValidator<RegisterRequestDto> registerValidator, IValidator<LoginRequestDto> loginValidator)
     {
         _jwtService = jwtService;
         _userManager = userManager;
+        _registerValidator = registerValidator;
+        _loginValidator = loginValidator;
     }
 
     public async Task<Result<string>> RegisterAsync(RegisterRequestDto requestDto)
     {
-        if (requestDto.Password != requestDto.ConfirmPassword)
+        var validationResult = await _registerValidator.ValidateAsync(requestDto);
+        if (!validationResult.IsValid)
         {
-            return Result<string>.Failure("Passwords do not match");
+            return Result<string>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
         }
         
         var user = new User
@@ -45,6 +51,12 @@ public class AuthService
 
     public async Task<Result<string>> LoginAsync(LoginRequestDto requestDto)
     {
+        var validationResult = await _loginValidator.ValidateAsync(requestDto);
+        if (!validationResult.IsValid)
+        {
+            return Result<string>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+        }
+        
         var user = await _userManager.FindByEmailAsync(requestDto.Email);
         if (user == null)
         {

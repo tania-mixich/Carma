@@ -12,20 +12,22 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(u => u.Id);
         
         builder.Property(u => u.Karma).HasDefaultValue(0);
-        builder.Property(u => u.CreatedAt).HasDefaultValueSql("NOW()");
-        builder.Property(u => u.UpdatedAt).HasDefaultValueSql("NOW()");
+        builder.Property(u => u.CreatedAt).IsRequired();
+        builder.Property(u => u.UpdatedAt).IsRequired();
         
         builder.OwnsOne(u => u.Location, location =>
         {
-            location.Property(l => l.Latitude)
-                .HasColumnName("Latitude");
-
-            location.Property(l => l.Longitude)
-                .HasColumnName("Longitude");
-
             location.Property(l => l.Address)
                 .HasColumnName("Address")
                 .HasMaxLength(255);
+
+            location.Property(l => l.Coordinate)
+                .HasColumnName("Coordinate")
+                .IsRequired()
+                .HasColumnType("geography(Point, 4326)");
+            
+            location.HasIndex(l => l.Coordinate)
+                .HasMethod("gist");
         });
         builder.Navigation(u => u.Location).IsRequired(false);
     }

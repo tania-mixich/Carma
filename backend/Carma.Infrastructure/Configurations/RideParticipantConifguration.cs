@@ -12,9 +12,11 @@ public class RideParticipantConifguration : IEntityTypeConfiguration<RidePartici
         builder.ToTable("RideParticipants");
         builder.HasKey(rp => new { rp.RideId, rp.UserId });
         
-        builder.Property(rp => rp.RequestedAt).HasDefaultValueSql("NOW()");
+        builder.Property(rp => rp.RequestedAt).IsRequired();
         builder.Property(rp => rp.IsAccepted).HasDefaultValue(false);
-        builder.Property(rp => rp.RideRole).HasDefaultValue(RideRole.NotAssigned);
+        builder.Property(rp => rp.RideRole).HasDefaultValue(RideRole.NotAssigned)
+            .HasConversion<string>()
+            .HasMaxLength(50);
         
         builder.HasOne(rp => rp.Ride)
             .WithMany(r => r.Participants)

@@ -1,10 +1,12 @@
 using System.Text;
 using Carma.Application.Abstractions;
 using Carma.Application.Services;
+using Carma.Application.Validators.Auth;
 using Carma.Domain.Entities;
 using Carma.Infrastructure;
+using Carma.Infrastructure.Repositories;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -12,7 +14,10 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<CarmaDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("CarmaDb")));
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("CarmaDb"),
+            npgsqlOptions => npgsqlOptions.UseNetTopologySuite());
+    });
 
 builder.Services.AddIdentityCore<User>(options =>
     {
@@ -46,10 +51,19 @@ builder.Services.AddAuthentication(options =>
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IRideRepository, RideRepository>();
+
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<RideService>();
 
 builder.Services.AddControllers();
+
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

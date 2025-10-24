@@ -7,8 +7,8 @@ public class Message
     public Guid UserId { get; set; }
     
     public string Text { get; set; } = string.Empty;
-    public DateTime SentAt { get; set; }
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
     
-    public required Ride Ride { get; set; }
-    public required User User { get; set; }
+    public Ride? Ride { get; set; }
+    public User? User { get; set; }
 }

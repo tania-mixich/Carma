@@ -1,11 +1,10 @@
-﻿using Carma.Application.DTOs.Location;
+using Carma.Application.DTOs.Location;
 
 namespace Carma.Application.DTOs.Ride;
 
-public record RideCreateDto(
+public record RideUpdateDto(
     LocationCreateDto PickupLocation,
     LocationCreateDto DropOffLocation,
     DateTime PickupTime,
     double Price,
-    int AvailableSeats
-    );
+    int AvailableSeats);
