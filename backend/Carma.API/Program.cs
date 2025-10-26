@@ -57,9 +57,11 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IRideRepository, RideRepository>();
+builder.Services.AddScoped<IRideParticipantRepository, RideParticipantRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<RideService>();
+builder.Services.AddScoped<RideParticipantService>();
 
 builder.Services.AddControllers();
 
