@@ -1,5 +1,6 @@
 using Carma.Application.DTOs.Ride;
 using Carma.Application.Services;
+using Carma.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,13 @@ public class RideController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpGet("nearby")]
+    public async Task<IActionResult> GetNearbyRides(int distance = 1000)
+    {
+        var result = await _rideService.GetNearbyRidesAsync(distance);
+        return Ok(result.Value);
+    }
+
     [HttpGet("{rideId}")]
     public async Task<IActionResult> GetById(int rideId)
     {
@@ -38,17 +46,17 @@ public class RideController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
-    [HttpPut("{rideId}")]
+    [HttpPatch("{rideId}")]
     public async Task<IActionResult> Update(int rideId, RideUpdateDto rideUpdateDto)
     {
         var result = await _rideService.UpdateRideAsync(rideId, rideUpdateDto);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
-    
-    [HttpDelete("{rideId}")]
-    public async Task<IActionResult> Delete(int rideId)
+
+    [HttpPatch("{rideId}/status")]
+    public async Task<IActionResult> ChangeStatus(int rideId, Status status)
     {
-        var result = await _rideService.DeleteRideAsync(rideId);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        var result = await _rideService.UpdateRideStatusAsync(rideId, status);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 }

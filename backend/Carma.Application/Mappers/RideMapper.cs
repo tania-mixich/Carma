@@ -13,6 +13,7 @@ public static class RideMapper
             DropOffLocation = LocationMapper.MapToLocation(rideCreateDto.DropOffLocation),
             PickupTime = rideCreateDto.PickupTime,
             Price = rideCreateDto.Price,
+            PricePerSeat = rideCreateDto.Price,
             AvailableSeats = rideCreateDto.AvailableSeats
         };
     }
@@ -22,10 +23,11 @@ public static class RideMapper
         return new RideGetDto
         (
             ride.Id,
+            ride.Organizer.UserName,
             LocationMapper.MapToLocationGetDto(ride.PickupLocation),
             LocationMapper.MapToLocationGetDto(ride.DropOffLocation),
             ride.PickupTime,
-            ride.Price,
+            ride.PricePerSeat,
             ride.AvailableSeats,
             ride.Status.ToString()
         );
@@ -37,7 +39,7 @@ public static class RideMapper
             LocationMapper.MapToLocationGetDto(ride.PickupLocation),
             LocationMapper.MapToLocationGetDto(ride.DropOffLocation),
             ride.PickupTime,
-            ride.Price,
+            ride.PricePerSeat,
             ride.AvailableSeats,
             ride.Status.ToString(),
             ride.Participants.Select(RideParticipantMapper.MapToRideParticipantGetDto).ToList()

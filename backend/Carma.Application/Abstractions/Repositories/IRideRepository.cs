@@ -1,4 +1,5 @@
 using Carma.Domain.Entities;
+using NetTopologySuite.Geometries;
 
 namespace Carma.Application.Abstractions.Repositories;
 
@@ -9,4 +10,5 @@ public interface IRideRepository
     void Update(Ride ride);
     void Delete(Ride ride);
     Task<IEnumerable<Ride>> GetAllAsync();
+    Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point userLocation, int radius);
 }

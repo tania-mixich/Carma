@@ -3,6 +3,7 @@ using System;
 using Carma.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Carma.Infrastructure.Migrations
 {
     [DbContext(typeof(CarmaDbContext))]
-    partial class CarmaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030140610_KarmaLogic")]
+    partial class KarmaLogic
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,7 +163,7 @@ namespace Carma.Infrastructure.Migrations
                     b.Property<DateTime>("PickupTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<double>("PricePerSeat")
+                    b.Property<double>("Price")
                         .HasColumnType("double precision");
 
                     b.Property<string>("Status")
@@ -169,9 +172,6 @@ namespace Carma.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Available");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -271,11 +271,6 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("ReviewsCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("RidesCount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0);

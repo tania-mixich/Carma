@@ -18,6 +18,7 @@ public class NotificationRepository : INotificationRepository
     {
         var notifications = await _context.Notifications
             .Where(n => n.UserId == userId)
+            .OrderByDescending(n => n.SentAt)
             .ToListAsync();
         return notifications;
     }
@@ -26,6 +27,7 @@ public class NotificationRepository : INotificationRepository
     {
         var notifications = await _context.Notifications
             .Where(n => n.UserId == userId && n.IsRead == false)
+            .OrderByDescending(n => n.SentAt)
             .ToListAsync();
         return notifications;
     }

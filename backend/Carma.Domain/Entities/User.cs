@@ -7,7 +7,9 @@ public class User : IdentityUser<Guid>
 {
     public string? ImageUrl { get; set; }
     public Location? Location { get; set; }
-    public int Karma { get; set; }
+    public double Karma { get; set; }
+    public int ReviewsCount { get; set; }
+    public int RidesCount { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

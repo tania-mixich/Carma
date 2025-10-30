@@ -1,7 +1,9 @@
 using Carma.Application.Abstractions;
 using Carma.Application.Abstractions.Repositories;
 using Carma.Domain.Entities;
+using Carma.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 
 namespace Carma.Infrastructure.Repositories;
 
@@ -15,7 +17,19 @@ public class RideRepository : IRideRepository
     
     public async Task<IEnumerable<Ride>> GetAllAsync()
     {
-        return await _context.Rides.ToListAsync();
+        return await _context.Rides
+            .Include(r => r.Organizer)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point userLocation, int radius)
+    {
+        return await _context.Rides
+            .Include(r => r.Participants)
+                .ThenInclude(rp => rp.User)
+            .Where(r => r.Status == Status.Available &&
+                        r.PickupLocation.Coordinate.IsWithinDistance(userLocation, radius))
+            .ToListAsync();
     }
     
     public async Task<Ride?> GetByIdAsync(int id)

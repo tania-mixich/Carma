@@ -62,7 +62,7 @@ public class MessageService
                 UserId = rp.UserId,
                 RideId = rideId,
                 Title = "New message in ride",
-                Message = $"{_currentUserService.Email} sent a message",
+                Message = $"{_currentUserService.Username} sent a message",
                 Type = NotificationType.NewMessage,
                 SentAt = DateTime.UtcNow,
                 IsRead = false

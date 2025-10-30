@@ -8,7 +8,7 @@ public class Review
     public int RideId { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int Karma { get; set; }
+    public double Karma { get; set; }
     public string Text { get; set; } = string.Empty;
     
     public User? Reviewer { get; set; }

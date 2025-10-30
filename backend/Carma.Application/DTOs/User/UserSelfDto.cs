@@ -4,7 +4,7 @@ public record UserSelfDto(
     string UserName,
     string Email,
     string? ImageUrl,
-    int Karma,
+    double Karma,
     int RidesCount,
     DateTime CreatedAt
     );

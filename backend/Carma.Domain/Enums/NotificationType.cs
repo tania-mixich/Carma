@@ -8,5 +8,7 @@ public enum NotificationType
     LeftRide,
     NewMessage,
     NewReview,
-    RideCancelled
+    RideCancelled,
+    RideCompleted,
+    RideStarted
 }

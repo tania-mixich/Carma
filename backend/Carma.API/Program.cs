@@ -61,6 +61,7 @@ builder.Services.AddScoped<IRideRepository, RideRepository>();
 builder.Services.AddScoped<IRideParticipantRepository, RideParticipantRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<RideService>();
@@ -68,6 +69,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RideParticipantService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<ReviewService>();
 
 builder.Services.AddControllers();
 

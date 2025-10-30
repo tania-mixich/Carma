@@ -1,11 +1,13 @@
 using Carma.Application.DTOs.Message;
 using Carma.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Carma.API.Controllers;
 
 [ApiController]
 [Route("rides/{rideId}/messages")]
+[Authorize]
 public class MessageController : ControllerBase
 {
     private readonly MessageService _messageService;

@@ -5,6 +5,6 @@ namespace Carma.Application.DTOs.RideParticipant;
 public record RideParticipantGetDto(
     string ParticipantName,
     string? ParticipantImageUrl,
-    int Karma,
+    double Karma,
     string RideRole
     );

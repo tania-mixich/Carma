@@ -61,7 +61,7 @@ public class RideParticipantService
             UserId = ride.OrganizerId,
             RideId = rideId,
             Title = "Ride request",
-            Message = $"{_currentUserService.Email} requested to join your ride",
+            Message = $"{_currentUserService.Username} requested to join your ride",
             Type = NotificationType.JoinRequest,
             SentAt = DateTime.UtcNow,
             IsRead = false
@@ -105,6 +105,13 @@ public class RideParticipantService
         rideParticipant.IsAccepted = true;
         rideParticipant.RideRole = RideRole.Participant;
         ride.AvailableSeats--;
+        var acceptedCount = ride.Participants.Count(p => p.IsAccepted);
+        ride.PricePerSeat = ride.Price / acceptedCount;
+        
+        if (ride.AvailableSeats < 1)
+        {
+            ride.Status = Status.Full;
+        }
         
         _rideRepository.Update(ride);
         _rideParticipantRepository.Update(rideParticipant);
@@ -114,7 +121,7 @@ public class RideParticipantService
             UserId = rideParticipantId,
             RideId = rideId,
             Title = "Ride request accepted",
-            Message = $"{_currentUserService.Email} accepted your ride request",
+            Message = $"{_currentUserService.Username} accepted your ride request",
             Type = NotificationType.JoinAccepted,
             SentAt = DateTime.UtcNow,
             IsRead = false
@@ -152,7 +159,7 @@ public class RideParticipantService
             UserId = rideParticipantId,
             RideId = rideId,
             Title = "Ride request rejected",
-            Message = $"{_currentUserService.Email} rejected your ride request",
+            Message = $"{_currentUserService.Username} rejected your ride request",
             Type = NotificationType.JoinRejected,
             SentAt = DateTime.UtcNow,
             IsRead = false
@@ -189,11 +196,22 @@ public class RideParticipantService
             UserId = ride.OrganizerId,
             RideId = rideId,
             Title = "Member left",
-            Message = $"{rideParticipant.User.Email} left the ride",
+            Message = $"{rideParticipant.User.UserName} left the ride",
             Type = NotificationType.LeftRide,
             SentAt = DateTime.UtcNow,
             IsRead = false
         });
+        
+        ride.AvailableSeats++;
+        if (ride.Status == Status.Full)
+        {
+            ride.Status = Status.Available;       
+        }
+        
+        var acceptedCount = ride.Participants.Count(p => p.IsAccepted);
+        ride.PricePerSeat = ride.Price / (acceptedCount - 1);
+        
+        _rideRepository.Update(ride);
         await _unitOfWork.SaveChangesAsync();
         
         return Result.Success();

@@ -19,6 +19,7 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
             .HasConversion<string>()
             .HasMaxLength(50);
         builder.Property(r => r.Price).IsRequired();
+        builder.Property(r => r.PricePerSeat).IsRequired();
         builder.Property(r => r.PickupTime).IsRequired();
 
         builder.OwnsOne(r => r.PickupLocation, location =>

@@ -44,7 +44,7 @@ public class AuthService
             var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
             return Result<string>.Failure(errors);
         }
-        var token = _jwtService.GenerateToken(user.Id, user.Email);
+        var token = _jwtService.GenerateToken(user.Id, user.Email, user.UserName);
         
         return Result<string>.Success(token);
     }
@@ -63,7 +63,7 @@ public class AuthService
             return Result<string>.Failure("Invalid credentials");
         }
         
-        var token = _jwtService.GenerateToken(user.Id, user.Email!);
+        var token = _jwtService.GenerateToken(user.Id, user.Email!, user.UserName!);
         
         return Result<string>.Success(token);
     }

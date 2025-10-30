@@ -16,4 +16,5 @@ public class CurrentUserService : ICurrentUserService
 
     public Guid UserId => Guid.Parse(_httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User not found."));
     public string Email => _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email) ?? throw new NotFoundException("User not found.");
+    public string Username => _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name) ?? throw new NotFoundException("User not found.");
 }

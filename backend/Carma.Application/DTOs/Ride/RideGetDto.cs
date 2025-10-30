@@ -5,10 +5,11 @@ namespace Carma.Application.DTOs.Ride;
 
 public record RideGetDto(
     int Id,
+    string OrganizerName,
     LocationGetDto PickupLocation,
     LocationGetDto DropOffLocation,
     DateTime PickupTime,
-    double Price,
+    double PricePerSeat,
     int AvailableSeats,
     string Status
 );

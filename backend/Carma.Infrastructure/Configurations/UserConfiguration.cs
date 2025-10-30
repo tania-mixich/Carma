@@ -12,6 +12,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(u => u.Id);
         
         builder.Property(u => u.Karma).HasDefaultValue(0);
+        builder.Property(u => u.ReviewsCount).HasDefaultValue(0);
+        builder.Property(u => u.RidesCount).HasDefaultValue(0);
         builder.Property(u => u.CreatedAt).IsRequired();
         builder.Property(u => u.UpdatedAt).IsRequired();
         

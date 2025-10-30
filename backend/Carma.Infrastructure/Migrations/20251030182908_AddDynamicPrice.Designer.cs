@@ -3,6 +3,7 @@ using System;
 using Carma.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Carma.Infrastructure.Migrations
 {
     [DbContext(typeof(CarmaDbContext))]
-    partial class CarmaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030182908_AddDynamicPrice")]
+    partial class AddDynamicPrice
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,7 +173,7 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Available");
 
-                    b.Property<double>("Price")
+                    b.Property<double>("TotalPrice")
                         .HasColumnType("double precision");
 
                     b.Property<DateTime>("UpdatedAt")

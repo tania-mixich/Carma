@@ -1,10 +1,12 @@
 using Carma.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Carma.API.Controllers;
 
 [ApiController]
 [Route("/notifications")]
+[Authorize]
 public class NotificationController : ControllerBase
 {
     private readonly NotificationService _notificationService;
