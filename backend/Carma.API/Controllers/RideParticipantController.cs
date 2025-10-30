@@ -1,10 +1,12 @@
-﻿using Carma.Application.DTOs.RideParticipant;
-using Carma.Application.Services;
+﻿using Carma.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Carma.API.Controllers;
 
 [ApiController]
+[Route("rides/{rideId}/participants")]
+[Authorize]
 public class RideParticipantController : ControllerBase
 {
     private readonly RideParticipantService  _rideParticipantService;
@@ -14,38 +16,32 @@ public class RideParticipantController : ControllerBase
         _rideParticipantService = rideParticipantService;
     }
 
-    [HttpGet("rides/{rideId}/participants")]
-    public async Task<IActionResult> GetAllByRideId(int rideId)
+    [HttpPost]
+    public async Task<IActionResult> RequestToJoin(int rideId)
     {
-        var result = await _rideParticipantService.GetParticipantsOfRideAsync(rideId);
+        var result = await _rideParticipantService.RequestToJoinRideAsync(rideId);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
-    [HttpGet("rides/{rideId}/participants/{userId}")]
-    public async Task<IActionResult> GetByRideAndUserId(int rideId, Guid userId)
+    [HttpPut("{userId:guid}/accept")]
+    public async Task<IActionResult> AcceptParticipant(int rideId, Guid userId)
     {
-        var result = await _rideParticipantService.GetParticipantByRideAndUserAsync(rideId, userId);
+        var result = await _rideParticipantService.AcceptRideParticipantAsync(rideId, userId);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
-    [HttpPost("rides/{rideId}/participants")]
-    public async Task<IActionResult> Create(int rideId)
+    [HttpDelete("{userId:guid}")]
+    public async Task<IActionResult> RemoveParticipant(int rideId, Guid userId)
     {
-        var result = await _rideParticipantService.CreateRideParticipantAsync(rideId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
-
-    [HttpPut("rides/{rideId}/participants/{userId}")]
-    public async Task<IActionResult> Update(int rideId, Guid userId, RideParticipantUpdateDto rideParticipantUpdateDto)
-    {
-        var result = await _rideParticipantService.UpdateRideParticipantAsync(rideId, userId, rideParticipantUpdateDto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
-
-    [HttpDelete("rides/{rideId}/participants/{userId}")]
-    public async Task<IActionResult> Delete(int rideId, Guid userId)
-    {
-        var result = await _rideParticipantService.DeleteRideParticipantAsync(rideId, userId);
+        var result = await _rideParticipantService.RejectRideParticipantAsync(rideId, userId);
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
+    
+    [HttpDelete("leave")]
+    public async Task<IActionResult> LeaveRide(int rideId)
+    {
+        var result = await _rideParticipantService.LeaveRideAsync(rideId);
+        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+    }
+    
 }

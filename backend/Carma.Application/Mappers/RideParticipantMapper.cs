@@ -17,8 +17,9 @@ public static class RideParticipantMapper
     {
         return new RideParticipantGetDto(
             rideParticipant.User?.UserName ?? "Unknown",
-            rideParticipant.IsAccepted,
-            rideParticipant.RideRole
+            rideParticipant.User?.ImageUrl ?? "",
+            rideParticipant.User?.Karma ?? 0,
+            rideParticipant.RideRole.ToString()
         );
     }
 }

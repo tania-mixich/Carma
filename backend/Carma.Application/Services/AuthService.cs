@@ -58,12 +58,11 @@ public class AuthService
         }
         
         var user = await _userManager.FindByEmailAsync(requestDto.Email);
-        if (user == null)
+        if (user == null || !await _userManager.CheckPasswordAsync(user, requestDto.Password))
         {
-            return Result<string>.Failure("User not found");
+            return Result<string>.Failure("Invalid credentials");
         }
-
-        await _userManager.CheckPasswordAsync(user, requestDto.Password);
+        
         var token = _jwtService.GenerateToken(user.Id, user.Email!);
         
         return Result<string>.Success(token);

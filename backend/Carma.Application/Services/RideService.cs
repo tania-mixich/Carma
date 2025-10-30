@@ -1,9 +1,10 @@
 using Carma.Application.Abstractions;
+using Carma.Application.Abstractions.Repositories;
 using Carma.Application.Common;
-using Carma.Application.DTOs.Location;
 using Carma.Application.DTOs.Ride;
 using Carma.Application.Mappers;
 using Carma.Domain.Entities;
+using Carma.Domain.Enums;
 using FluentValidation;
 
 namespace Carma.Application.Services;
@@ -31,15 +32,15 @@ public class RideService
         return Result<IEnumerable<RideGetDto>>.Success(rides.Select(RideMapper.MapToRideGetDto));
     }
 
-    public async Task<Result<RideGetDto>> GetRideAsync(int rideId)
+    public async Task<Result<RideDetailsDto>> GetRideAsync(int rideId)
     {
         var ride = await _rideRepository.GetByIdAsync(rideId);
         if (ride == null)
         {
-            return Result<RideGetDto>.Failure("Ride not found");
+            return Result<RideDetailsDto>.Failure("Ride not found");
         }
         
-        return Result<RideGetDto>.Success(RideMapper.MapToRideGetDto(ride));
+        return Result<RideDetailsDto>.Success(RideMapper.MapToRideDetailsDto(ride));
     }
 
     public async Task<Result<RideGetDto>> CreateRideAsync(RideCreateDto rideCreateDto)
@@ -56,6 +57,18 @@ public class RideService
         ride.OrganizerId = userId;
         
         await _rideRepository.AddAsync(ride);
+        
+        var rideParticipant = new RideParticipant
+        {
+            RequestedAt = DateTime.UtcNow,
+            AcceptedAt = DateTime.UtcNow,
+            IsAccepted = true,
+            Ride = ride,
+            UserId = userId,
+            RideRole = RideRole.Organizer
+        };
+        
+        await _unitOfWork.RideParticipants.AddAsync(rideParticipant);
         await _unitOfWork.SaveChangesAsync();
         
         return Result<RideGetDto>.Success(RideMapper.MapToRideGetDto(ride));
@@ -97,6 +110,21 @@ public class RideService
         }
         
         _rideRepository.Delete(ride);
+        
+        var participants = ride.Participants
+            .Where(rp => rp.UserId != _currentUserService.UserId && rp.IsAccepted)
+            .Select(rp => new Notification
+            {
+                UserId = rp.UserId,
+                RideId = rideId,
+                Title = "Ride cancelled",
+                Message = $"{_currentUserService.Email} cancelled the ride",
+                Type = NotificationType.RideCancelled,
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            });
+
+        await _unitOfWork.Notifications.AddRangeAsync(participants);
         await _unitOfWork.SaveChangesAsync();
         
         return Result.Success();

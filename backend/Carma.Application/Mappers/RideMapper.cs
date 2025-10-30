@@ -22,14 +22,25 @@ public static class RideMapper
         return new RideGetDto
         (
             ride.Id,
-            ride.CreatedAt,
-            ride.UpdatedAt,
             LocationMapper.MapToLocationGetDto(ride.PickupLocation),
             LocationMapper.MapToLocationGetDto(ride.DropOffLocation),
             ride.PickupTime,
             ride.Price,
             ride.AvailableSeats,
-            ride.Status
+            ride.Status.ToString()
         );
+    }
+
+    public static RideDetailsDto MapToRideDetailsDto(Ride ride)
+    {
+        return new RideDetailsDto(
+            LocationMapper.MapToLocationGetDto(ride.PickupLocation),
+            LocationMapper.MapToLocationGetDto(ride.DropOffLocation),
+            ride.PickupTime,
+            ride.Price,
+            ride.AvailableSeats,
+            ride.Status.ToString(),
+            ride.Participants.Select(RideParticipantMapper.MapToRideParticipantGetDto).ToList()
+            );
     }
 }

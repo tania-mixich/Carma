@@ -6,7 +6,7 @@ public class Notification
 {
     public int Id { get; set; }
     public Guid UserId { get; set; }
-    public int? RideId { get; set; }
+    public int RideId { get; set; }
     
     public NotificationType Type { get; set; }
     public string Title { get; set; } = string.Empty;
