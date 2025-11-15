@@ -1,3 +1,4 @@
+using Carma.Application.Abstractions;
 using Carma.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Carma.Infrastructure;
 
-public class CarmaDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
+public class CarmaDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>, ICarmaDbContext
 {
     public DbSet<Message> Messages { get; set; }
     public DbSet<Notification> Notifications { get; set; }

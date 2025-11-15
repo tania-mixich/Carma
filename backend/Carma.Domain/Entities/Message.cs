@@ -8,7 +8,7 @@ public class Message
     
     public string Text { get; set; } = string.Empty;
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
-    
-    public Ride? Ride { get; set; }
-    public User? User { get; set; }
+
+    public Ride Ride { get; set; } = null!;
+    public User User { get; set; } = null!;
 }

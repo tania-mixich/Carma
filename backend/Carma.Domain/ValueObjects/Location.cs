@@ -4,7 +4,6 @@ namespace Carma.Domain.ValueObjects;
 
 public class Location
 {
-    public string? Address { get; set; }
     public Point Coordinate { get; set; }
     
     public Location()
@@ -12,7 +11,7 @@ public class Location
         
     }
     
-    public Location(double latitude, double longitude, string? address = null)
+    public Location(double latitude, double longitude)
     {
         if (latitude is < -90 or > 90)
         {
@@ -23,9 +22,6 @@ public class Location
             throw new ArgumentOutOfRangeException(nameof(longitude));
         }
         
-        Address = address;
         Coordinate = new Point(longitude, latitude) { SRID = 4326 };
     }
-
-    public double DistanceTo(Location other) => Coordinate.Distance(other.Coordinate);
 }

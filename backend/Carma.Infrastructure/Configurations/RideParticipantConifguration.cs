@@ -13,8 +13,10 @@ public class RideParticipantConifguration : IEntityTypeConfiguration<RidePartici
         builder.HasKey(rp => new { rp.RideId, rp.UserId });
         
         builder.Property(rp => rp.RequestedAt).IsRequired();
-        builder.Property(rp => rp.IsAccepted).HasDefaultValue(false);
-        builder.Property(rp => rp.RideRole).HasDefaultValue(RideRole.NotAssigned)
+        builder.Property(rp => rp.Status).IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(50);
+        builder.Property(rp => rp.Role).IsRequired()
             .HasConversion<string>()
             .HasMaxLength(50);
         

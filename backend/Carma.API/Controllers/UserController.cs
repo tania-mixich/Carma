@@ -1,3 +1,4 @@
+using Carma.API.Extensions;
 using Carma.Application.DTOs.User;
 using Carma.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,27 +22,27 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _userService.GetAllAsync();
-        return Ok(result.Value);
+        return result.ToActionResult();
     }
     
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetProfile(Guid id)
     {
         var result = await _userService.GetProfileAsync(id);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPatch("self")]
     public async Task<IActionResult> Update(UserUpdateDto userUpdateDto)
     {
         var result = await _userService.UpdateProfileAsync(userUpdateDto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.ToActionResult();
     }
     
     [HttpDelete("self")]
     public async Task<IActionResult> Delete()
     {
         var result = await _userService.DeleteAsync();
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        return result.ToActionResult();
     }
 }

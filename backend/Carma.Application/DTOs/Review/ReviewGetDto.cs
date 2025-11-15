@@ -6,5 +6,6 @@ public record ReviewGetDto(
     UserSummaryDto Reviewer,
     int RideId,
     double Karma,
-    string Text
+    string Text,
+    DateTime CreatedAt
     );

@@ -1,4 +1,6 @@
-﻿using Carma.Application.Services;
+﻿using Carma.API.Extensions;
+using Carma.Application.DTOs.RideParticipant;
+using Carma.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,28 +22,26 @@ public class RideParticipantController : ControllerBase
     public async Task<IActionResult> RequestToJoin(int rideId)
     {
         var result = await _rideParticipantService.RequestToJoinRideAsync(rideId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+
+        if (result.IsSuccess)
+        {
+            return CreatedAtAction(nameof(RequestToJoin), new { rideId }, null);
+        }
+        return result.ToActionResult();
     }
 
-    [HttpPut("{userId:guid}/accept")]
-    public async Task<IActionResult> AcceptParticipant(int rideId, Guid userId)
+    [HttpPatch("{userId:guid}")]
+    public async Task<IActionResult> AcceptParticipant(int rideId, Guid userId, [FromBody] RideParticipantUpdateDto dto)
     {
-        var result = await _rideParticipantService.AcceptRideParticipantAsync(rideId, userId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
-
-    [HttpDelete("{userId:guid}")]
-    public async Task<IActionResult> RemoveParticipant(int rideId, Guid userId)
-    {
-        var result = await _rideParticipantService.RejectRideParticipantAsync(rideId, userId);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        var result = await _rideParticipantService.HandleRideParticipantAsync(rideId, userId, dto);
+        return result.ToActionResult();
     }
     
-    [HttpDelete("leave")]
-    public async Task<IActionResult> LeaveRide(int rideId)
+    [HttpPatch("me")]
+    public async Task<IActionResult> LeaveRide(int rideId, [FromBody] RideParticipantUpdateSelfDto dto)
     {
-        var result = await _rideParticipantService.LeaveRideAsync(rideId);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        var result = await _rideParticipantService.LeaveRideAsync(rideId, dto);
+        return result.ToActionResult();
     }
     
 }

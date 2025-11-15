@@ -25,18 +25,13 @@ public class UserService
     public async Task<Result<IEnumerable<UserSummaryDto>>> GetAllAsync()
     {
         var users = await _userManager.Users.ToListAsync();
-        return Result<IEnumerable<UserSummaryDto>>.Success(users.Select(UserMapper.MapToUserSummaryDto));
-    }
-    
-    public async Task<Result<UserSummaryDto>> GetSummaryAsync(Guid userId)
-    {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            return Result<UserSummaryDto>.Failure("User not found");
-        }
-        
-        return Result<UserSummaryDto>.Success(UserMapper.MapToUserSummaryDto(user));
+        return Result<IEnumerable<UserSummaryDto>>.Success(users.Select(u => new UserSummaryDto(
+            u.Id,
+            u.UserName,
+            u.ImageUrl,
+            u.Karma
+            ))
+        );
     }
 
     public async Task<Result<object>> GetProfileAsync(Guid userId)
@@ -44,15 +39,31 @@ public class UserService
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return Result<object>.Failure("User not found");
+            return Result<object>.NotFound("User not found");
         }
 
         if (userId == _currentUserService.UserId)
         {
-            return Result<object>.Success(UserMapper.MapToUserSelfDto(user));
+            return Result<object>.Success(new UserSelfDto(
+                userId,
+                user.UserName,
+                user.Email,
+                user.ImageUrl,
+                user.Karma,
+                user.RidesCount,
+                user.CreatedAt
+                )
+            );
         }
         
-        return Result<object>.Success(UserMapper.MapToUserProfileDto(user));
+        return Result<object>.Success(new UserProfileDto(
+            userId,
+            user.UserName,
+            user.ImageUrl,
+            user.Karma,
+            user.RidesCount
+            )
+        );
     }
 
     public async Task<Result<UserSelfDto>> UpdateProfileAsync(UserUpdateDto userUpdateDto)
@@ -68,7 +79,7 @@ public class UserService
             .FirstOrDefaultAsync(u => u.Id == _currentUserService.UserId);
         if (user == null)
         {
-            return Result<UserSelfDto>.Failure("User not found");
+            return Result<UserSelfDto>.NotFound("User not found");
         }
         
         user.UserName = userUpdateDto.UserName ?? user.UserName;
@@ -82,7 +93,16 @@ public class UserService
             return Result<UserSelfDto>.Failure(string.Join("; ", result.Errors.Select(e => e.Description)));
         }
         
-        return Result<UserSelfDto>.Success(UserMapper.MapToUserSelfDto(user));
+        return Result<UserSelfDto>.Success(new UserSelfDto(
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.ImageUrl,
+                user.Karma,
+                user.RidesCount,
+                user.CreatedAt
+            )
+        );
     }
 
     public async Task<Result> DeleteAsync()
@@ -90,7 +110,7 @@ public class UserService
         var user = await _userManager.FindByIdAsync(_currentUserService.UserId.ToString());
         if (user == null)
         {
-            return Result.Failure("User not found");
+            return Result.NotFound("User not found");
         }
 
         var result = await _userManager.DeleteAsync(user);

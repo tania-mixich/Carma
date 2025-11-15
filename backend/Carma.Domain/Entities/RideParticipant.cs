@@ -9,9 +9,11 @@ public class RideParticipant
     
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     public DateTime? AcceptedAt { get; set; }
-    public bool IsAccepted { get; set; }
-    public RideRole RideRole { get; set; }
-    
-    public User? User { get; set; }
-    public Ride? Ride { get; set; }
+    public DateTime? RejectedAt { get; set; }
+    public DateTime? LeftAt { get; set; }
+    public ParticipantRole Role { get; set; }
+    public ParticipantStatus Status { get; set; } = ParticipantStatus.Pending;
+
+    public User User { get; set; } = null!;
+    public Ride Ride { get; set; } = null!;
 }

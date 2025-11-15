@@ -13,7 +13,7 @@ public class Notification
     public string Message { get; set; } = string.Empty;
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
     public bool IsRead { get; set; }
-    
-    public User? User { get; set; }
+
+    public User User { get; set; } = null!;
     public Ride? Ride { get; set; }
 }

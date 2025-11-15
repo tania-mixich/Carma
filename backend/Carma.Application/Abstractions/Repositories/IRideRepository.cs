@@ -5,10 +5,6 @@ namespace Carma.Application.Abstractions.Repositories;
 
 public interface IRideRepository 
 {
-    Task<Ride> AddAsync(Ride ride);
-    Task<Ride?> GetByIdAsync(int id);
-    void Update(Ride ride);
-    void Delete(Ride ride);
-    Task<IEnumerable<Ride>> GetAllAsync();
-    Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point userLocation, int radius);
+    Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point startLocation, int radius);
+    Task<IEnumerable<Ride>> GetNearbyRidesHeadingToTheLocationAsync(Point startLocation, int startRadius, Point endLocation, int endRadius);
 }

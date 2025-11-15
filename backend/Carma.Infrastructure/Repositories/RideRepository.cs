@@ -14,45 +14,26 @@ public class RideRepository : IRideRepository
     {
         _context = context;
     }
-    
-    public async Task<IEnumerable<Ride>> GetAllAsync()
-    {
-        return await _context.Rides
-            .Include(r => r.Organizer)
-            .ToListAsync();
-    }
 
-    public async Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point userLocation, int radius)
+    public async Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point startLocation, int radius)
     {
         return await _context.Rides
             .Include(r => r.Participants)
                 .ThenInclude(rp => rp.User)
             .Where(r => r.Status == Status.Available &&
-                        r.PickupLocation.Coordinate.IsWithinDistance(userLocation, radius))
+                        r.PickupLocation.Coordinate.IsWithinDistance(startLocation, radius))
             .ToListAsync();
     }
-    
-    public async Task<Ride?> GetByIdAsync(int id)
+
+    public async Task<IEnumerable<Ride>> GetNearbyRidesHeadingToTheLocationAsync(Point startLocation, int startRadius, Point endLocation,
+        int endRadius)
     {
         return await _context.Rides
-            .Include(r => r.Participants.Where(rp => rp.IsAccepted))
+            .Include(r => r.Participants)
                 .ThenInclude(rp => rp.User)
-            .FirstOrDefaultAsync(r => r.Id == id);
-    }
-    
-    public async Task<Ride> AddAsync(Ride ride)
-    {
-        await _context.Rides.AddAsync(ride);
-        return ride;
-    }
-    
-    public void Update(Ride entity)
-    {
-        _context.Rides.Update(entity);
-    }
-    
-    public void Delete(Ride entity)
-    {
-        _context.Rides.Remove(entity);
+            .Where(r => r.Status == Status.Available && 
+                        r.PickupLocation.Coordinate.IsWithinDistance(startLocation, startRadius) &&
+                        r.DropOffLocation.Coordinate.IsWithinDistance(endLocation, endRadius))
+            .ToListAsync();
     }
 }

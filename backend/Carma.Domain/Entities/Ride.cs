@@ -17,8 +17,8 @@ public class Ride
     public double PricePerSeat { get; set; }
     public int AvailableSeats { get; set; }
     public Status Status { get; set; }
-    
-    public User? Organizer { get; set; }
+
+    public User Organizer { get; set; } = null!;
     public ICollection<RideParticipant> Participants { get; set; } = new List<RideParticipant>();
     public ICollection<Message> Messages { get; set; } = new List<Message>();
 }

@@ -1,3 +1,4 @@
+using Carma.API.Extensions;
 using Carma.Application.DTOs.Auth;
 using Carma.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register(RegisterRequestDto requestDto)
     {
         var result = await _authService.RegisterAsync(requestDto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error); 
+        return result.ToActionResult();
     }
 
     [HttpPost]
@@ -28,6 +29,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginRequestDto requestDto)
     {
         var result = await _authService.LoginAsync(requestDto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.ToActionResult();
     }
 }

@@ -1,3 +1,4 @@
+using Carma.API.Extensions;
 using Carma.Application.DTOs.Review;
 using Carma.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,13 +22,13 @@ public class ReviewController : ControllerBase
     public async Task<IActionResult> GetReviewsForUser(Guid userId)
     {
         var result = await _reviewService.GetAllForUserAsync(userId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.ToActionResult();
     }
 
     [HttpPost]
     public async Task<IActionResult> AddReview(Guid userId, ReviewCreateDto reviewCreateDto)
     {
         var result = await _reviewService.AddReviewAsync(userId, reviewCreateDto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.ToActionResult();
     }
 }

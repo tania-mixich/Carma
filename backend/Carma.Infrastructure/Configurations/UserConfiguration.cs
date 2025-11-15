@@ -19,10 +19,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.OwnsOne(u => u.Location, location =>
         {
-            location.Property(l => l.Address)
-                .HasColumnName("Address")
-                .HasMaxLength(255);
-
             location.Property(l => l.Coordinate)
                 .HasColumnName("Coordinate")
                 .IsRequired()

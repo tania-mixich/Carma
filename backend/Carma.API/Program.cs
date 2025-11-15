@@ -1,4 +1,6 @@
 using System.Text;
+using Carma.API;
+using Carma.API.Hubs;
 using Carma.Application.Abstractions;
 using Carma.Application.Abstractions.Repositories;
 using Carma.Application.Services;
@@ -6,6 +8,7 @@ using Carma.Application.Validators.Auth;
 using Carma.Domain.Entities;
 using Carma.Infrastructure;
 using Carma.Infrastructure.Repositories;
+using Carma.Infrastructure.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +22,9 @@ builder.Services.AddDbContext<CarmaDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("CarmaDb"),
             npgsqlOptions => npgsqlOptions.UseNetTopologySuite());
     });
+
+builder.Services.AddScoped<ICarmaDbContext>(provider => 
+    provider.GetRequiredService<CarmaDbContext>());
 
 builder.Services.AddIdentityCore<User>(options =>
     {
@@ -52,16 +58,20 @@ builder.Services.AddAuthentication(options =>
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRCors", policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddSignalR();
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IRideRepository, RideRepository>();
-builder.Services.AddScoped<IRideParticipantRepository, RideParticipantRepository>();
-builder.Services.AddScoped<IMessageRepository, MessageRepository>();
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<RideService>();
@@ -116,11 +126,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
+
+app.UseCors("SignalRCors");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

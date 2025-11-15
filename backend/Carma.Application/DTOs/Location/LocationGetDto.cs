@@ -1,3 +1,3 @@
 namespace Carma.Application.DTOs.Location;
 
-public record LocationGetDto(double Latitude, double Longitude, string? Address);
+public record LocationGetDto(double Latitude, double Longitude);

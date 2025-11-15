@@ -1,62 +1,75 @@
 ﻿using Carma.Application.Abstractions;
-using Carma.Application.Abstractions.Repositories;
 using Carma.Application.Common;
 using Carma.Application.DTOs.RideParticipant;
-using Carma.Application.Mappers;
 using Carma.Domain.Entities;
 using Carma.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Carma.Application.Services;
 
 public class RideParticipantService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICarmaDbContext _context;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IRideParticipantRepository _rideParticipantRepository;
-    private readonly IRideRepository _rideRepository;
 
-    public RideParticipantService(IUnitOfWork unitOfWork, ICurrentUserService currentUserService,
-        IRideParticipantRepository rideParticipantRepository, IRideRepository rideRepository)
+    public RideParticipantService(ICarmaDbContext context, ICurrentUserService currentUserService)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
         _currentUserService = currentUserService;
-        _rideParticipantRepository = rideParticipantRepository;
-        _rideRepository = rideRepository;
     }
 
     public async Task<Result<RideParticipantGetDto>> RequestToJoinRideAsync(int rideId)
     {
-        var ride = await _rideRepository.GetByIdAsync(rideId);
+        var userId = _currentUserService.UserId;
+        
+        var ride = await _context.Rides.FindAsync(rideId);
         if (ride == null)
         {
-            return Result<RideParticipantGetDto>.Failure("Ride not found");
+            return Result<RideParticipantGetDto>.NotFound("Ride not found");
         }
         
-        if (ride.OrganizerId == _currentUserService.UserId)
+        if (ride.OrganizerId == userId)
         {
-            return Result<RideParticipantGetDto>.Failure("You cannot request to join your own ride");
+            return Result<RideParticipantGetDto>.Conflict("You cannot request to join your own ride");
         }
 
         if (ride.AvailableSeats < 1)
         {
-            return Result<RideParticipantGetDto>.Failure("Ride is full");
+            return Result<RideParticipantGetDto>.Conflict("Ride is full");
         }
         
-        var containsResult = await _rideParticipantRepository.ContainsUserAsync(rideId, _currentUserService.UserId);
-        if (containsResult)
+        var requestedParticipant =
+            await _context.RideParticipants.FirstOrDefaultAsync(rp => rp.RideId == rideId && rp.UserId == userId);
+        
+        if (requestedParticipant != null)
         {
-            return Result<RideParticipantGetDto>.Failure("You already requested to join this ride");
+            if (requestedParticipant.Status == ParticipantStatus.Left)
+            {
+                requestedParticipant.Status = ParticipantStatus.Pending;
+                requestedParticipant.RequestedAt = DateTime.UtcNow;
+                requestedParticipant.LeftAt = null;
+                _context.RideParticipants.Update(requestedParticipant);
+            }
+            else {
+                return Result<RideParticipantGetDto>.Conflict(
+                    "You already requested to join this ride or you've been rejected");
+            }
         }
-        
-        var rideParticipant = RideParticipantMapper.MapToRideParticipant(rideId);
-        
-        var userId = _currentUserService.UserId;
-        rideParticipant.UserId = userId;
-        rideParticipant.RequestedAt = DateTime.UtcNow;
-        rideParticipant.RideRole = RideRole.NotAssigned;
-        
-        await _rideParticipantRepository.AddAsync(rideParticipant);
-        await _unitOfWork.Notifications.CreateAsync(new Notification
+        else
+        {
+            requestedParticipant = new RideParticipant
+            {
+                RideId = rideId,
+                UserId = userId,
+                RequestedAt = DateTime.UtcNow,
+                Role = ParticipantRole.Passenger,
+                Status = ParticipantStatus.Pending
+            };
+
+            await _context.RideParticipants.AddAsync(requestedParticipant);
+        }
+
+        await _context.Notifications.AddAsync(new Notification
         {
             UserId = ride.OrganizerId,
             RideId = rideId,
@@ -66,95 +79,103 @@ public class RideParticipantService
             SentAt = DateTime.UtcNow,
             IsRead = false
         });
-        await _unitOfWork.SaveChangesAsync();
+        await _context.SaveChangesAsync();
+
+        var user = await _context.Users.FindAsync(userId);
         
-        var created = await _rideParticipantRepository.GetByRideAndUserAsync(rideId, userId);
-        return Result<RideParticipantGetDto>.Success(RideParticipantMapper.MapToRideParticipantGetDto(created!));
+        return Result<RideParticipantGetDto>.Success(
+            new RideParticipantGetDto(
+                user!.UserName,
+                user.ImageUrl,
+                user.Karma,
+                requestedParticipant.Role.ToString()
+                )
+            );
     }
     
-    public async Task<Result<RideParticipantGetDto>> AcceptRideParticipantAsync(int rideId, Guid rideParticipantId)
+    public async Task<Result<RideParticipantGetDto?>> HandleRideParticipantAsync(int rideId, Guid rideParticipantId, RideParticipantUpdateDto updateDto)
     {
-        if (_currentUserService.UserId == rideParticipantId)
+        if (updateDto.Status != "Accepted" && updateDto.Status != "Rejected")
         {
-            return Result<RideParticipantGetDto>.Failure("You cannot accept your own ride request");
+            return Result<RideParticipantGetDto?>.Conflict("You can only accept or reject a ride");
         }
         
-        var ride = await _rideRepository.GetByIdAsync(rideId);
+        var userId = _currentUserService.UserId;
+        if (userId == rideParticipantId)
+        {
+            return Result<RideParticipantGetDto?>.Conflict("You cannot accept your own ride request");
+        }
+        
+        var ride = await _context.Rides.FindAsync(rideId);
         if (ride == null)
         {
-            return Result<RideParticipantGetDto>.Failure("Ride not found");
+            return Result<RideParticipantGetDto?>.NotFound("Ride not found");
         }
 
-        if (ride.OrganizerId != _currentUserService.UserId)
+        if (ride.OrganizerId != userId)
         {
-            return Result<RideParticipantGetDto>.Failure("You are not the organizer of this ride");
+            return Result<RideParticipantGetDto?>.Unauthorized("You are not the organizer of this ride");
         }
 
-        var rideParticipant = await _rideParticipantRepository.GetByRideAndUserAsync(rideId, rideParticipantId);
+        var rideParticipant = await _context.RideParticipants
+            .Include(rp => rp.User)
+            .FirstOrDefaultAsync(rp => rp.RideId == rideId && rp.UserId == rideParticipantId);
+        
         if (rideParticipant == null)
         {
-            return Result<RideParticipantGetDto>.Failure("Ride participant not found");
+            return Result<RideParticipantGetDto?>.NotFound("Ride participant not found");
         }
         
-        if (rideParticipant.RideRole != RideRole.NotAssigned)
+        if (rideParticipant.Status != ParticipantStatus.Pending)
         {
-            return Result<RideParticipantGetDto>.Failure("Ride participant already handled");
+            return Result<RideParticipantGetDto?>.Conflict("Ride participant already handled");
         }
         
-        rideParticipant.AcceptedAt = DateTime.UtcNow;
-        rideParticipant.IsAccepted = true;
-        rideParticipant.RideRole = RideRole.Participant;
-        ride.AvailableSeats--;
-        var acceptedCount = ride.Participants.Count(p => p.IsAccepted);
-        ride.PricePerSeat = ride.Price / acceptedCount;
-        
-        if (ride.AvailableSeats < 1)
+        if (updateDto.Status == "Accepted")
         {
-            ride.Status = Status.Full;
+            rideParticipant.AcceptedAt = DateTime.UtcNow;
+            rideParticipant.Status = ParticipantStatus.Accepted;
+            rideParticipant.Role = ParticipantRole.Passenger;
+            ride.AvailableSeats--;
+            var acceptedCount = await _context.RideParticipants.CountAsync(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted);
+            if (acceptedCount > 0)
+            {
+                ride.PricePerSeat = ride.Price / (acceptedCount + 1);   
+            }
+        
+            if (ride.AvailableSeats < 1)
+            {
+                ride.Status = Status.Full;
+            }
+        
+            _context.Rides.Update(ride);
+            _context.RideParticipants.Update(rideParticipant);
+        
+            await _context.Notifications.AddAsync(new Notification
+            {
+                UserId = rideParticipantId,
+                RideId = rideId,
+                Title = "Ride request accepted",
+                Message = $"{_currentUserService.Username} accepted your ride request",
+                Type = NotificationType.JoinAccepted,
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            });
+            await _context.SaveChangesAsync();
+            
+            return Result<RideParticipantGetDto?>.Success(new RideParticipantGetDto(
+                    rideParticipant.User.UserName,
+                    rideParticipant.User.ImageUrl,
+                    rideParticipant.User.Karma,
+                    rideParticipant.Role.ToString()
+                )
+            );
         }
-        
-        _rideRepository.Update(ride);
-        _rideParticipantRepository.Update(rideParticipant);
-        
-        await _unitOfWork.Notifications.CreateAsync(new Notification
-        {
-            UserId = rideParticipantId,
-            RideId = rideId,
-            Title = "Ride request accepted",
-            Message = $"{_currentUserService.Username} accepted your ride request",
-            Type = NotificationType.JoinAccepted,
-            SentAt = DateTime.UtcNow,
-            IsRead = false
-        });
-        await _unitOfWork.SaveChangesAsync();
-        
-        return Result<RideParticipantGetDto>.Success(RideParticipantMapper.MapToRideParticipantGetDto(rideParticipant));
-    }
+        rideParticipant.Status = ParticipantStatus.Rejected;
+        rideParticipant.RejectedAt = DateTime.UtcNow;
+        _context.RideParticipants.Update(rideParticipant);
     
-    public async Task<Result> RejectRideParticipantAsync(int rideId, Guid rideParticipantId)
-    {
-        if (_currentUserService.UserId == rideParticipantId)
-        {
-            return Result.Failure("You cannot reject your own ride request");
-        }
-        
-        var ride = await _rideRepository.GetByIdAsync(rideId);
-        if (ride == null)
-        {
-            return Result.Failure("Ride not found");
-        }
-        
-        if (ride.OrganizerId != _currentUserService.UserId)
-            return Result.Failure("You are not the organizer of this ride");
-        
-        var rideParticipant = await _rideParticipantRepository.GetByRideAndUserAsync(rideId, rideParticipantId);
-        if (rideParticipant == null)
-        {
-            return Result.Failure("Ride participant not found");
-        }
-        
-        _rideParticipantRepository.Delete(rideParticipant);
-        await _unitOfWork.Notifications.CreateAsync(new Notification
+        await _context.Notifications.AddAsync(new Notification
         {
             UserId = rideParticipantId,
             RideId = rideId,
@@ -164,34 +185,61 @@ public class RideParticipantService
             SentAt = DateTime.UtcNow,
             IsRead = false
         });
-        await _unitOfWork.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         
-        return Result.Success();
+        return Result<RideParticipantGetDto>.Success(null);
     }
 
-    public async Task<Result> LeaveRideAsync(int rideId)
+    public async Task<Result> LeaveRideAsync(int rideId, RideParticipantUpdateSelfDto dto)
     {
+        if (dto.Status != "Leave")
+        {
+            return Result.Conflict("You can just leave the ride");
+        }
+        
         var userId = _currentUserService.UserId;
         
-        var ride = await _rideRepository.GetByIdAsync(rideId);
+        var ride = await _context.Rides.FindAsync(rideId);
         if (ride == null)
         {
-            return Result.Failure("Ride not found");
+            return Result.NotFound("Ride not found");
         }
 
-        var rideParticipant = await _rideParticipantRepository.GetByRideAndUserAsync(rideId, userId);
+        var rideParticipant = await _context.RideParticipants
+            .Include(rp => rp.User)
+            .FirstOrDefaultAsync(rp => rp.RideId == rideId && rp.UserId == userId);
         if (rideParticipant == null)
         {
-            return Result.Failure("You are not a participant of this ride");
+            return Result.Unauthorized("You are not a participant of this ride");
         }
 
-        if (rideParticipant.RideRole == RideRole.Organizer)
+        if (rideParticipant.Role == ParticipantRole.Organizer)
         {
-            return Result.Failure("You cannot leave your own ride");
+            return Result.Conflict("You cannot leave your own ride");
         }
+
+        if (rideParticipant.Status == ParticipantStatus.Accepted)
+        {
+            ride.AvailableSeats++;
+            if (ride.Status == Status.Full)
+            {
+                ride.Status = Status.Available;       
+            }
         
-        _rideParticipantRepository.Delete(rideParticipant);
-        await _unitOfWork.Notifications.CreateAsync(new Notification
+            var remainingCount = await _context.RideParticipants.CountAsync(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted && rp.UserId != userId);
+            if (remainingCount > 0)
+            {
+                ride.PricePerSeat = ride.Price / remainingCount;
+            }
+            
+            _context.Rides.Update(ride);
+        }
+
+        rideParticipant.Status = ParticipantStatus.Left;
+        rideParticipant.LeftAt = DateTime.UtcNow;
+        _context.RideParticipants.Update(rideParticipant);
+        
+        await _context.Notifications.AddAsync(new Notification
         {
             UserId = ride.OrganizerId,
             RideId = rideId,
@@ -202,18 +250,23 @@ public class RideParticipantService
             IsRead = false
         });
         
-        ride.AvailableSeats++;
-        if (ride.Status == Status.Full)
-        {
-            ride.Status = Status.Available;       
-        }
-        
-        var acceptedCount = ride.Participants.Count(p => p.IsAccepted);
-        ride.PricePerSeat = ride.Price / (acceptedCount - 1);
-        
-        _rideRepository.Update(ride);
-        await _unitOfWork.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         
         return Result.Success();
     }
+    
+    public async Task<Result> CanJoinChatAsync(int rideId)
+    {
+        var userId = _currentUserService.UserId;
+        var participant = await _context.RideParticipants
+            .FirstOrDefaultAsync(rp => rp.RideId == rideId && rp.UserId == userId);
+        if (participant == null)
+            return Result.Unauthorized("You are not a participant of this ride");
+    
+        if (participant.Status != ParticipantStatus.Accepted)
+            return Result.Conflict("Your request to join this ride is still pending");
+
+        return Result.Success();
+    }
+
 }

@@ -1,61 +1,101 @@
 using Carma.Application.Abstractions;
-using Carma.Application.Abstractions.Repositories;
 using Carma.Application.Common;
 using Carma.Application.DTOs.Notification;
-using Carma.Application.Mappers;
-using Carma.Domain.Entities;
-using FluentValidation;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Carma.Application.Services;
 
 public class NotificationService
 {
-    private readonly INotificationRepository _notificationRepository;
+    private readonly ICarmaDbContext _context;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IUnitOfWork _unitOfWork;
     
-    public NotificationService(INotificationRepository notificationRepository, ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
+    public NotificationService(ICarmaDbContext context, ICurrentUserService currentUserService)
     {
-        _notificationRepository = notificationRepository;
+        _context = context;
         _currentUserService = currentUserService;
-        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<IEnumerable<NotificationGetDto>>> GetAllForUserAsync()
     {
         var userId = _currentUserService.UserId;
-        var notifications = await _notificationRepository.GetAllForUserAsync(userId);
-        return Result<IEnumerable<NotificationGetDto>>.Success(notifications.Select(NotificationMapper.MapToNotificationGetDto));
+        
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == userId)
+            .OrderByDescending(n => n.SentAt)
+            .Select(n => new NotificationGetDto(
+                n.Id,
+                n.Title,
+                n.Message,
+                n.Type.ToString(),
+                n.SentAt,
+                n.RideId,
+                n.IsRead
+                )
+            )
+            .ToListAsync();
+        
+        return Result<IEnumerable<NotificationGetDto>>.Success(notifications);
     }
 
     public async Task<Result<IEnumerable<NotificationGetDto>>> GetAllUnreadForUserAsync()
     {
         var userId = _currentUserService.UserId;
-        var notifications = await _notificationRepository.GetUnreadForUserAsync(userId);
-        return Result<IEnumerable<NotificationGetDto>>.Success(notifications.Select(NotificationMapper.MapToNotificationGetDto));
+        
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == userId && n.IsRead == false)
+            .OrderByDescending(n => n.SentAt)
+            .Select(n => new NotificationGetDto(
+                n.Id,
+                n.Title,
+                n.Message,
+                n.Type.ToString(),
+                n.SentAt,
+                n.RideId,
+                n.IsRead
+                )
+            )
+            .ToListAsync();
+        
+        return Result<IEnumerable<NotificationGetDto>>.Success(notifications);
     }
-    public async Task<Result<NotificationGetDto>> MarkAsReadAsync(int notificationId)
+    public async Task<Result<NotificationGetDto>> MarkAsReadAsync(int notificationId, NotificationUpdateDto requestDto)
     {
-        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (requestDto.IsRead != true)
+        {
+            return Result<NotificationGetDto>.Conflict("You can only mark it as read");
+        }
+        
+        var notification = await _context.Notifications.FindAsync(notificationId);
         if (notification == null)
         {
-            return Result<NotificationGetDto>.Failure("Notification not found");
+            return Result<NotificationGetDto>.NotFound("Notification not found");
         }
 
         if (notification.IsRead)
         {
-            return Result<NotificationGetDto>.Failure("Notification already read");
+            return Result<NotificationGetDto>.Conflict("Notification already read");
         }
 
         if (notification.UserId != _currentUserService.UserId)
         {
-            return Result<NotificationGetDto>.Failure("You cannot mark this notification as read");
+            return Result<NotificationGetDto>.Unauthorized("You cannot mark this notification as read");
         }
         
         notification.IsRead = true;
-        _notificationRepository.Update(notification);
-        await _unitOfWork.SaveChangesAsync();
-        return Result<NotificationGetDto>.Success(NotificationMapper.MapToNotificationGetDto(notification));
+        
+        _context.Notifications.Update(notification);
+        await _context.SaveChangesAsync();
+        
+        return Result<NotificationGetDto>.Success(new NotificationGetDto(
+            notification.Id,
+            notification.Title,
+            notification.Message,
+            notification.Type.ToString(),
+            notification.SentAt,
+            notification.RideId,
+            notification.IsRead
+            )
+        );
     }
 }

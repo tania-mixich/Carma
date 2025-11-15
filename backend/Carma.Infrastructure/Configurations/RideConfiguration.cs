@@ -23,11 +23,7 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
         builder.Property(r => r.PickupTime).IsRequired();
 
         builder.OwnsOne(r => r.PickupLocation, location =>
-        {
-            location.Property(l => l.Address)
-                .HasColumnName("PickupAddress")
-                .HasMaxLength(255);
-
+        { 
             location.Property(l => l.Coordinate)
                 .HasColumnName("PickupCoordinate")
                 .IsRequired()
@@ -39,10 +35,6 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
 
         builder.OwnsOne(r => r.DropOffLocation, location =>
         {
-            location.Property(l => l.Address)
-                .HasColumnName("DropOffAddress")
-                .HasMaxLength(255);
-            
             location.Property(l => l.Coordinate)
                 .HasColumnName("DropOffCoordinate")
                 .IsRequired()

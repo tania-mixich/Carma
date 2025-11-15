@@ -6,5 +6,6 @@ public record NotificationGetDto(
     string Message,
     string NotificationType,
     DateTime SentAt,
-    int RideId
+    int RideId,
+    bool IsRead
     );

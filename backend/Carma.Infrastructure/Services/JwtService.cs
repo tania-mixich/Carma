@@ -5,7 +5,7 @@ using Carma.Application.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Carma.Infrastructure;
+namespace Carma.Infrastructure.Services;
 
 public class JwtService : IJwtService
 {

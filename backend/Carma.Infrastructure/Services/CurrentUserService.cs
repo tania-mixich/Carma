@@ -3,7 +3,7 @@ using Carma.Application.Abstractions;
 using Carma.Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Http;
 
-namespace Carma.Infrastructure;
+namespace Carma.Infrastructure.Services;
 
 public class CurrentUserService : ICurrentUserService
 {
