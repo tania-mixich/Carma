@@ -13,8 +13,7 @@ public static class RideMapper
             DropOffLocation = LocationMapper.MapToLocation(rideCreateDto.DropOffLocation),
             PickupTime = rideCreateDto.PickupTime,
             Price = rideCreateDto.Price,
-            PricePerSeat = rideCreateDto.Price,
-            AvailableSeats = rideCreateDto.AvailableSeats
+            Seats = rideCreateDto.AvailableSeats
         };
     }
 }

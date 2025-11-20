@@ -33,7 +33,9 @@ public class RideParticipantService
             return Result<RideParticipantGetDto>.Conflict("You cannot request to join your own ride");
         }
 
-        if (ride.AvailableSeats < 1)
+        var participantCount = await _context.RideParticipants.CountAsync(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted);
+        
+        if (ride.Seats - participantCount < 1)
         {
             return Result<RideParticipantGetDto>.Conflict("Ride is full");
         }
@@ -95,9 +97,15 @@ public class RideParticipantService
     
     public async Task<Result<RideParticipantGetDto?>> HandleRideParticipantAsync(int rideId, Guid rideParticipantId, RideParticipantUpdateDto updateDto)
     {
-        if (updateDto.Status != "Accepted" && updateDto.Status != "Rejected")
+        var statusString = updateDto.Status;
+        if (!Enum.TryParse<ParticipantStatus>(statusString, true, out var newStatus))
         {
-            return Result<RideParticipantGetDto?>.Conflict("You can only accept or reject a ride");
+            return Result<RideParticipantGetDto?>.Conflict("Invalid status provided");
+        }
+        
+        if (newStatus != ParticipantStatus.Accepted && newStatus != ParticipantStatus.Rejected)
+        {
+            return Result<RideParticipantGetDto?>.Conflict("You can only Accept or Reject");
         }
         
         var userId = _currentUserService.UserId;
@@ -131,19 +139,14 @@ public class RideParticipantService
             return Result<RideParticipantGetDto?>.Conflict("Ride participant already handled");
         }
         
-        if (updateDto.Status == "Accepted")
+        if (newStatus == ParticipantStatus.Accepted)
         {
             rideParticipant.AcceptedAt = DateTime.UtcNow;
             rideParticipant.Status = ParticipantStatus.Accepted;
             rideParticipant.Role = ParticipantRole.Passenger;
-            ride.AvailableSeats--;
+ 
             var acceptedCount = await _context.RideParticipants.CountAsync(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted);
-            if (acceptedCount > 0)
-            {
-                ride.PricePerSeat = ride.Price / (acceptedCount + 1);   
-            }
-        
-            if (ride.AvailableSeats < 1)
+            if (acceptedCount + 1 >= ride.Seats)
             {
                 ride.Status = Status.Full;
             }
@@ -187,16 +190,11 @@ public class RideParticipantService
         });
         await _context.SaveChangesAsync();
         
-        return Result<RideParticipantGetDto>.Success(null);
+        return Result<RideParticipantGetDto?>.Success(null);
     }
 
-    public async Task<Result> LeaveRideAsync(int rideId, RideParticipantUpdateSelfDto dto)
+    public async Task<Result> LeaveRideAsync(int rideId)
     {
-        if (dto.Status != "Leave")
-        {
-            return Result.Conflict("You can just leave the ride");
-        }
-        
         var userId = _currentUserService.UserId;
         
         var ride = await _context.Rides.FindAsync(rideId);
@@ -220,16 +218,9 @@ public class RideParticipantService
 
         if (rideParticipant.Status == ParticipantStatus.Accepted)
         {
-            ride.AvailableSeats++;
             if (ride.Status == Status.Full)
             {
                 ride.Status = Status.Available;       
-            }
-        
-            var remainingCount = await _context.RideParticipants.CountAsync(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted && rp.UserId != userId);
-            if (remainingCount > 0)
-            {
-                ride.PricePerSeat = ride.Price / remainingCount;
             }
             
             _context.Rides.Update(ride);

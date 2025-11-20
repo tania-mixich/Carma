@@ -14,8 +14,7 @@ public class Ride
     public required Location DropOffLocation { get; set; }
     public DateTime PickupTime { get; set; }
     public double Price { get; set; }
-    public double PricePerSeat { get; set; }
-    public int AvailableSeats { get; set; }
+    public int Seats { get; set; }
     public Status Status { get; set; }
 
     public User Organizer { get; set; } = null!;

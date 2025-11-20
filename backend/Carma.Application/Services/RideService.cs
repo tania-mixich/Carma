@@ -33,87 +33,141 @@ public class RideService
     public async Task<Result<IEnumerable<RideGetDto>>> GetAllRidesAsync()
     {
         var rides = await _context.Rides
-            .Include(r => r.Organizer)
-            .ToListAsync();
-        return Result<IEnumerable<RideGetDto>>.Success(
-            rides.Select(r => new RideGetDto(
+            .AsNoTracking()
+            //.Include(r => r.Organizer)
+            .Select(r => new
+            {
                 r.Id,
-                r.Organizer.UserName,
-                new LocationGetDto(r.PickupLocation.Coordinate.Y, r.PickupLocation.Coordinate.X),
-                new LocationGetDto(r.DropOffLocation.Coordinate.Y, r.DropOffLocation.Coordinate.X),
+                OrganzierName = r.Organizer.UserName,
+                PickupPoint = r.PickupLocation.Coordinate, 
+                DropOffPoint = r.DropOffLocation.Coordinate,
                 r.PickupTime,
-                r.PricePerSeat,
-                r.AvailableSeats,
-                r.Status.ToString())
+                r.Price,
+                r.Seats,
+                r.Status, 
+                AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted)
+            })
+            .OrderByDescending(r => r.PickupTime)
+            .ToListAsync();
+
+        var dtos = rides.Select(r => new RideGetDto(
+                r.Id,
+                r.OrganzierName,
+                new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
+                new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
+                r.PickupTime,
+                r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
+                r.Seats - r.AcceptedCount,
+                r.Status.ToString()
             )
         );
+        
+        return Result<IEnumerable<RideGetDto>>.Success(dtos);
     }
 
     public async Task<Result<IEnumerable<RideGetDto>>> GetNearbyRidesAsync(RideQueryDto query)
     {
-        var pickup = new Point(query.PickupLongitude, query.PickupLatitude);
+        var pickup = new Point(query.PickupLongitude, query.PickupLatitude) {SRID = 4326};
+        IEnumerable<RideGetDto> rides;
+        
         if (query.DropoffLatitude.HasValue && query.DropoffLongitude.HasValue)
         {
-            var destination = new Point(query.DropoffLongitude.Value, query.DropoffLatitude.Value);
-            var rides = await _rideRepository.GetNearbyRidesHeadingToTheLocationAsync(pickup, query.PickupRadius, destination, query.DropoffRadius);
+            var destination = new Point(query.DropoffLongitude.Value, query.DropoffLatitude.Value) {SRID = 4326};
+            rides = await _rideRepository.GetNearbyRidesHeadingToTheLocationAsync(pickup, query.PickupRadius, destination, query.DropoffRadius);
             
-            return Result<IEnumerable<RideGetDto>>.Success(
-                rides.Select(r => new RideGetDto(
-                    r.Id,
-                    r.Organizer.UserName,
-                    new LocationGetDto(r.PickupLocation.Coordinate.Y, r.PickupLocation.Coordinate.X),
-                    new LocationGetDto(r.DropOffLocation.Coordinate.Y, r.DropOffLocation.Coordinate.X),
-                    r.PickupTime,
-                    r.PricePerSeat,
-                    r.AvailableSeats,
-                    r.Status.ToString()
-                ))
-            );
         }
         else
         {
-            var rides = await _rideRepository.GetNearbyRidesAsync(pickup, query.PickupRadius);
-            return Result<IEnumerable<RideGetDto>>.Success(
-                rides.Select(r => new RideGetDto(
-                    r.Id,
-                    r.Organizer.UserName,
-                    new LocationGetDto(r.PickupLocation.Coordinate.Y, r.PickupLocation.Coordinate.X),
-                    new LocationGetDto(r.DropOffLocation.Coordinate.Y, r.DropOffLocation.Coordinate.X),
-                    r.PickupTime,
-                    r.PricePerSeat,
-                    r.AvailableSeats,
-                    r.Status.ToString()
-                ))
-            );
+            rides = await _rideRepository.GetNearbyRidesAsync(pickup, query.PickupRadius);
         }
+
+        return Result<IEnumerable<RideGetDto>>.Success(rides);
     }
+
+    public async Task<Result<IEnumerable<RideGetDto>>> GetPreviousRides()
+    {
+        var userId = _currentUserService.UserId;
+        var rides = await _context.Rides
+            .AsNoTracking()
+            .Where(r => r.Participants.Any(rp => rp.UserId == userId && rp.Status == ParticipantStatus.Accepted) && r.Status == Status.Completed)
+            .OrderByDescending(r => r.PickupTime)
+            .Select(r => new
+                {
+                    r.Id,
+                    OrganzierName = r.Organizer.UserName,
+                    PickupPoint = r.PickupLocation.Coordinate, 
+                    DropOffPoint = r.DropOffLocation.Coordinate,
+                    r.PickupTime,
+                    r.Price,
+                    r.Seats,
+                    r.Status, 
+                    AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted)
+                })
+            .ToListAsync();
+
+        var dtos = rides.Select(r => new RideGetDto(
+                r.Id,
+                r.OrganzierName,
+                new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
+                new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
+                r.PickupTime,
+                r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
+                r.Seats - r.AcceptedCount,
+                r.Status.ToString()
+            )
+        );
+        
+        return Result<IEnumerable<RideGetDto>>.Success(dtos);
+    } 
     
     public async Task<Result<RideDetailsDto>> GetRideAsync(int rideId)
     {
         var ride = await _context.Rides
-            .Include(r => r.Participants)
-                .ThenInclude(p => p.User)
-            .FirstOrDefaultAsync(r => r.Id == rideId);
+            //.Include(r => r.Participants)
+                //.ThenInclude(p => p.User)
+            .AsNoTracking()
+            .Where(r => r.Id == rideId)
+            .Select(r => new
+            {
+                r.Id,
+                PickupPoint = r.PickupLocation.Coordinate,
+                DropOffPoint = r.DropOffLocation.Coordinate,
+                r.PickupTime,
+                r.Price,
+                r.Seats,
+                r.Status,
+                Participants = r.Participants.Where(rp => rp.Status == ParticipantStatus.Accepted)
+                    .Select(rp => new
+                    {
+                        rp.User.UserName,
+                        rp.User.ImageUrl,
+                        rp.User.Karma,
+                        Role = rp.Role.ToString()
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync();
         
         if (ride == null)
         {
             return Result<RideDetailsDto>.NotFound("Ride not found");
         }
+        
+        var acceptedCount = ride.Participants.Count;
 
         var rideDto = new RideDetailsDto(
-            new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
-            new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
+            new LocationGetDto(ride.PickupPoint.Y, ride.PickupPoint.X),
+            new LocationGetDto(ride.DropOffPoint.Y, ride.DropOffPoint.X),
             ride.PickupTime,
-            ride.PricePerSeat,
-            ride.AvailableSeats,
+            acceptedCount > 0 ? ride.Price / acceptedCount: ride.Price,
+            ride.Seats - acceptedCount,
             ride.Status.ToString(),
             ride.Participants
-                .Where(p => p.Status == ParticipantStatus.Accepted)
-                .Select(p => new RideParticipantGetDto(
-                p.User.UserName,
-                p.User.ImageUrl,
-                p.User.Karma,
-                p.Role.ToString()
+                .Select(rp => new RideParticipantGetDto(
+                rp.UserName,
+                rp.ImageUrl,
+                rp.Karma,
+                rp.Role.ToString()
                 ))
                 .ToList()
             );
@@ -154,8 +208,8 @@ public class RideService
             new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
             new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
             ride.PickupTime,
-            ride.PricePerSeat,
-            ride.AvailableSeats,
+            ride.Price,
+            ride.Seats - 1,
             ride.Status.ToString()
             )
         );
@@ -171,6 +225,7 @@ public class RideService
         
         var ride = await _context.Rides
             .Include(r => r.Organizer)
+            .Include(r => r.Participants)
             .FirstOrDefaultAsync(r => r.Id == id);
         if (ride == null)
         {
@@ -194,11 +249,13 @@ public class RideService
 
         ride.PickupTime = rideUpdateDto.PickupTime ?? ride.PickupTime;
         ride.Price = rideUpdateDto.Price ?? ride.Price;
-        ride.AvailableSeats = rideUpdateDto.AvailableSeats ?? ride.AvailableSeats;
+        ride.Seats = rideUpdateDto.AvailableSeats ?? ride.Seats;
         ride.UpdatedAt = DateTime.UtcNow;
         
         _context.Rides.Update(ride);
         await _context.SaveChangesAsync();
+        
+        var acceptedCount = ride.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted);
         
         return Result<RideGetDto>.Success(new RideGetDto(
             ride.Id,
@@ -206,8 +263,8 @@ public class RideService
             new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
             new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
             ride.PickupTime,
-            ride.PricePerSeat,
-            ride.AvailableSeats,
+            acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
+            ride.Seats - acceptedCount,
             ride.Status.ToString()
             )
         );
@@ -215,13 +272,15 @@ public class RideService
 
     public async Task<Result<RideGetDto>> UpdateRideStatusAsync(int rideId, RideStatusUpdateDto dto)
     {
-        if (!Enum.TryParse<Status>(dto.Status, out var status))
+        var statusString = dto.Status;
+        if (!Enum.TryParse<Status>(statusString, true, out var newStatus))
         {
             return Result<RideGetDto>.Failure("Invalid status");
         }
         
         var ride = await _context.Rides
             .Include(r => r.Organizer)
+            .Include(r => r.Participants)
             .FirstOrDefaultAsync(r => r.Id == rideId);
         if (ride == null)
         {
@@ -233,10 +292,10 @@ public class RideService
             return Result<RideGetDto>.Unauthorized("You are not the organizer of this ride");
         }
         
-        ride.Status = status;
+        ride.Status = newStatus;
         ride.UpdatedAt = DateTime.UtcNow;
 
-        if (status == Status.Completed)
+        if (newStatus == Status.Completed)
         {
             var participantUserIds = await _context.RideParticipants
                 .Where(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted)
@@ -267,7 +326,7 @@ public class RideService
             
             await _context.Notifications.AddRangeAsync(notifications);
         }
-        else if (status == Status.Cancelled)
+        else if (newStatus == Status.Cancelled)
         {
             var participantUserIds = await _context.RideParticipants
                 .Where(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted)
@@ -291,7 +350,7 @@ public class RideService
             
             await _context.Notifications.AddRangeAsync(notifications);
         }
-        else if (status == Status.InProgress)
+        else if (newStatus == Status.InProgress)
         {
             var participantUserIds = await _context.RideParticipants
                 .Where(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Accepted)
@@ -312,16 +371,19 @@ public class RideService
             
             await _context.Notifications.AddRangeAsync(notifications);
         }
-
+        
         await _context.SaveChangesAsync();
+
+        var acceptedCount = ride.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted);
+        
         return Result<RideGetDto>.Success(new RideGetDto(
             ride.Id,
             ride.Organizer.UserName,
             new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
             new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
             ride.PickupTime,
-            ride.PricePerSeat,
-            ride.AvailableSeats,
+            acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
+            ride.Seats - acceptedCount,
             ride.Status.ToString()
             )
         );

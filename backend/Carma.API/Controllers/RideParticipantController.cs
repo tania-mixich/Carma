@@ -38,9 +38,9 @@ public class RideParticipantController : ControllerBase
     }
     
     [HttpPatch("me")]
-    public async Task<IActionResult> LeaveRide(int rideId, [FromBody] RideParticipantUpdateSelfDto dto)
+    public async Task<IActionResult> LeaveRide(int rideId)
     {
-        var result = await _rideParticipantService.LeaveRideAsync(rideId, dto);
+        var result = await _rideParticipantService.LeaveRideAsync(rideId);
         return result.ToActionResult();
     }
     

@@ -27,6 +27,13 @@ public class RideController : ControllerBase
         return result.ToActionResult();
     }
 
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory()
+    {
+        var result = await _rideService.GetPreviousRides();
+        return result.ToActionResult();
+    }
+
     [HttpGet("nearby")]
     public async Task<IActionResult> GetNearbyRides([FromQuery] RideQueryDto query)
     {
@@ -40,7 +47,7 @@ public class RideController : ControllerBase
         var result = await _rideService.GetRideAsync(rideId);
         return result.ToActionResult();
     }
-
+    
     [HttpPost]
     public async Task<IActionResult> Create(RideCreateDto rideCreateDto)
     {

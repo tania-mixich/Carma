@@ -1,5 +1,7 @@
 using Carma.Application.Abstractions;
 using Carma.Application.Abstractions.Repositories;
+using Carma.Application.DTOs.Location;
+using Carma.Application.DTOs.Ride;
 using Carma.Domain.Entities;
 using Carma.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -15,25 +17,71 @@ public class RideRepository : IRideRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Ride>> GetNearbyRidesAsync(Point startLocation, int radius)
+    public async Task<IEnumerable<RideGetDto>> GetNearbyRidesAsync(Point startLocation, int radius)
     {
-        return await _context.Rides
-            .Include(r => r.Participants)
-                .ThenInclude(rp => rp.User)
+        var rides = await _context.Rides
+            .AsNoTracking()
             .Where(r => r.Status == Status.Available &&
                         r.PickupLocation.Coordinate.IsWithinDistance(startLocation, radius))
+            .Select(r => new
+            {
+                r.Id,
+                OrganizerName = r.Organizer.UserName,
+                PickupPoint = r.PickupLocation.Coordinate,
+                DropOffPoint = r.DropOffLocation.Coordinate,
+                r.PickupTime,
+                r.Price,
+                r.Seats,
+                r.Status,
+                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted)
+            })
             .ToListAsync();
+
+        return rides.Select(r => new RideGetDto(
+                r.Id,
+                r.OrganizerName,
+                new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
+                new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
+                r.PickupTime,
+                r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
+                r.Seats - r.AcceptedCount,
+                r.Status.ToString()
+                )
+            );
     }
 
-    public async Task<IEnumerable<Ride>> GetNearbyRidesHeadingToTheLocationAsync(Point startLocation, int startRadius, Point endLocation,
+    public async Task<IEnumerable<RideGetDto>> GetNearbyRidesHeadingToTheLocationAsync(Point startLocation, int startRadius, Point endLocation,
         int endRadius)
     {
-        return await _context.Rides
-            .Include(r => r.Participants)
-                .ThenInclude(rp => rp.User)
+        var rides = await _context.Rides
+            .AsNoTracking()
             .Where(r => r.Status == Status.Available && 
                         r.PickupLocation.Coordinate.IsWithinDistance(startLocation, startRadius) &&
                         r.DropOffLocation.Coordinate.IsWithinDistance(endLocation, endRadius))
+            .Select(r => new
+            {
+                r.Id,
+                OrganizerName = r.Organizer.UserName,
+                PickupPoint = r.PickupLocation.Coordinate,
+                DropOffPoint = r.DropOffLocation.Coordinate,
+                r.PickupTime,
+                r.Price,
+                r.Seats,
+                r.Status,
+                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted)
+            })
             .ToListAsync();
+
+        return rides.Select(r => new RideGetDto(
+                r.Id,
+                r.OrganizerName,
+                new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
+                new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
+                r.PickupTime,
+                r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
+                r.Seats - r.AcceptedCount,
+                r.Status.ToString()
+            )
+        );
     }
 }

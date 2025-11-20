@@ -14,12 +14,11 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
         
         builder.Property(r => r.CreatedAt).IsRequired();
         builder.Property(r => r.UpdatedAt).IsRequired();
-        builder.Property(r => r.AvailableSeats).IsRequired();
+        builder.Property(r => r.Seats).IsRequired();
         builder.Property(r => r.Status).HasDefaultValue(Status.Available)
             .HasConversion<string>()
             .HasMaxLength(50);
         builder.Property(r => r.Price).IsRequired();
-        builder.Property(r => r.PricePerSeat).IsRequired();
         builder.Property(r => r.PickupTime).IsRequired();
 
         builder.OwnsOne(r => r.PickupLocation, location =>
