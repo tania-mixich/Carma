@@ -47,7 +47,6 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await _apiClient.post('/auth/logout');
       _apiClient.clearAuthToken();
     } on DioException {
       _apiClient.clearAuthToken();
