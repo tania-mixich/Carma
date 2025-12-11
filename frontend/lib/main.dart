@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/features/auth/logic/auth_cubit.dart';
-import 'package:frontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/auth_screen.dart';
 import 'package:frontend/features/home/presentation/screens/home_screen.dart';
 
 void main() {
@@ -24,7 +24,6 @@ class Carma extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: const AuthWrapper(),
         routes: {
-          '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
         },
       ),
@@ -49,7 +48,7 @@ class AuthWrapper extends StatelessWidget {
         } else if (state is AuthAuthenticated) {
           return const HomeScreen();
         } else {
-          return const LoginScreen();
+          return const AuthScreen();
         }
       }
     );
