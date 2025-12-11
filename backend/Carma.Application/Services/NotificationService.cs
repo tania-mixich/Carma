@@ -21,6 +21,7 @@ public class NotificationService
         var userId = _currentUserService.UserId;
         
         var notifications = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.SentAt)
             .Select(n => new NotificationGetDto(
@@ -43,6 +44,7 @@ public class NotificationService
         var userId = _currentUserService.UserId;
         
         var notifications = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.UserId == userId && n.IsRead == false)
             .OrderByDescending(n => n.SentAt)
             .Select(n => new NotificationGetDto(
@@ -61,7 +63,7 @@ public class NotificationService
     }
     public async Task<Result<NotificationGetDto>> MarkAsReadAsync(int notificationId, NotificationUpdateDto requestDto)
     {
-        if (requestDto.IsRead != true)
+        if (!requestDto.IsRead)
         {
             return Result<NotificationGetDto>.Conflict("You can only mark it as read");
         }
@@ -84,7 +86,6 @@ public class NotificationService
         
         notification.IsRead = true;
         
-        _context.Notifications.Update(notification);
         await _context.SaveChangesAsync();
         
         return Result<NotificationGetDto>.Success(new NotificationGetDto(

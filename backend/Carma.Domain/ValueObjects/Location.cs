@@ -4,9 +4,9 @@ namespace Carma.Domain.ValueObjects;
 
 public class Location
 {
-    public Point Coordinate { get; set; }
+    public Point Coordinate { get; private set; }
     
-    public Location()
+    protected Location()
     {
         
     }

@@ -24,14 +24,16 @@ public class UserService
 
     public async Task<Result<IEnumerable<UserSummaryDto>>> GetAllAsync()
     {
-        var users = await _userManager.Users.ToListAsync();
-        return Result<IEnumerable<UserSummaryDto>>.Success(users.Select(u => new UserSummaryDto(
-            u.Id,
-            u.UserName,
-            u.ImageUrl,
-            u.Karma
-            ))
-        );
+        var users = await _userManager.Users
+            .AsNoTracking()
+            .Select(u => new UserSummaryDto(
+                u.Id, 
+                u.UserName!, 
+                u.ImageUrl, 
+                u.Karma)
+            )
+            .ToListAsync();
+        return Result<IEnumerable<UserSummaryDto>>.Success(users);
     }
 
     public async Task<Result<object>> GetProfileAsync(Guid userId)
@@ -46,8 +48,8 @@ public class UserService
         {
             return Result<object>.Success(new UserSelfDto(
                 userId,
-                user.UserName,
-                user.Email,
+                user.UserName!,
+                user.Email!,
                 user.ImageUrl,
                 user.Karma,
                 user.RidesCount,
@@ -58,7 +60,7 @@ public class UserService
         
         return Result<object>.Success(new UserProfileDto(
             userId,
-            user.UserName,
+            user.UserName!,
             user.ImageUrl,
             user.Karma,
             user.RidesCount
@@ -71,7 +73,8 @@ public class UserService
         var validationResult = await _updateValidator.ValidateAsync(userUpdateDto);
         if (!validationResult.IsValid)
         {
-            return Result<UserSelfDto>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result<UserSelfDto>.Failure(string.Join("; ", errors));
         }
         
         var user = await _userManager.Users
@@ -81,8 +84,17 @@ public class UserService
         {
             return Result<UserSelfDto>.NotFound("User not found");
         }
-        
-        user.UserName = userUpdateDto.UserName ?? user.UserName;
+
+        if (!string.IsNullOrEmpty(userUpdateDto.UserName) && userUpdateDto.UserName != user.UserName)
+        {
+            var userNameAlreadyExists = await _userManager.Users.AnyAsync(u => u.UserName == userUpdateDto.UserName);
+            if (userNameAlreadyExists)
+            {
+                return Result<UserSelfDto>.Conflict("Username already exists");
+            }
+            user.UserName = userUpdateDto.UserName ?? user.UserName;
+        }
+
         user.ImageUrl = userUpdateDto.ImageUrl ?? user.ImageUrl;
         user.Location = userUpdateDto.Location != null ? LocationMapper.MapToLocation(userUpdateDto.Location) : user.Location;
         user.UpdatedAt = DateTime.UtcNow;
@@ -95,8 +107,8 @@ public class UserService
         
         return Result<UserSelfDto>.Success(new UserSelfDto(
                 user.Id,
-                user.UserName,
-                user.Email,
+                user.UserName!,
+                user.Email!,
                 user.ImageUrl,
                 user.Karma,
                 user.RidesCount,

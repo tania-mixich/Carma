@@ -5,7 +5,6 @@ namespace Carma.Domain.Entities;
 
 public class User : IdentityUser<Guid>
 {
-    public override string UserName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
     public Location? Location { get; set; }
     public double Karma { get; set; }

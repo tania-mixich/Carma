@@ -24,7 +24,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .HasForeignKey(r => r.ReviewedUserId);
         
         builder.HasOne(r => r.Ride)
-            .WithMany()
+            .WithMany(r => r.Reviews)
             .HasForeignKey(r => r.RideId);
     }
 }

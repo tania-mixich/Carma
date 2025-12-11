@@ -4,6 +4,7 @@ using Carma.Application.DTOs.Review;
 using Carma.Application.DTOs.User;
 using Carma.Domain.Entities;
 using Carma.Domain.Enums;
+using Carma.Domain.Factories;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +32,7 @@ public class ReviewService
         }
         
         var reviews = await _context.Reviews
+            .AsNoTracking()
             .Where(r => r.ReviewedUserId == userId)
             .Select(r => new ReviewGetDto(
                     new UserSummaryDto(
@@ -54,22 +56,15 @@ public class ReviewService
         var validationResult = await _createValidator.ValidateAsync(reviewCreateDto);
         if (!validationResult.IsValid)
         {
-            return Result<ReviewGetDto>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result<ReviewGetDto>.Failure(string.Join("; ", errors));
         }
         
         var currentUserId = _currentUserService.UserId;
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null)
-        {
-            return Result<ReviewGetDto>.NotFound("User not found");
-        }
-
-        if (user.Id == currentUserId)
-        {
-            return Result<ReviewGetDto>.Conflict("You cannot review yourself");
-        }
-        
-        var ride = await _context.Rides.FindAsync(reviewCreateDto.RideId);
+        var ride = await _context.Rides
+            .Include(r => r.Participants)
+                .ThenInclude(p => p.User)
+            .FirstOrDefaultAsync(r => r.Id == reviewCreateDto.RideId);
         if (ride == null)
         {
             return Result<ReviewGetDto>.NotFound("Ride not found");
@@ -79,32 +74,28 @@ public class ReviewService
         {
             return Result<ReviewGetDto>.Conflict("You cannot review a ride that is not completed");
         }
+        
+        var reviewer = ride.Participants.FirstOrDefault(p => p.UserId == currentUserId && p.Status == ParticipantStatus.Accepted);
+        var target = ride.Participants.FirstOrDefault(p => p.UserId == userId && p.Status == ParticipantStatus.Accepted);
 
-        var reviewerIsInRide =
-            await _context.RideParticipants.AnyAsync(rp =>
-                rp.UserId == currentUserId && 
-                rp.RideId == reviewCreateDto.RideId && 
-                rp.Status == ParticipantStatus.Accepted);
-        if (!reviewerIsInRide)
+        if (reviewer == null)
         {
             return Result<ReviewGetDto>.Unauthorized("You can only review users from rides you participated in");
         }
-        
-        var reviewedIsInRide =
-            await _context.RideParticipants.AnyAsync(rp => 
-                rp.UserId == userId && 
-                rp.RideId == reviewCreateDto.RideId && 
-                rp.Status == ParticipantStatus.Accepted);
-        if (!reviewedIsInRide)
+
+        if (target == null)
         {
             return Result<ReviewGetDto>.Conflict("You cannot review a participant that is not in the ride");
         }
+        
+        
+        if (target.UserId == currentUserId)
+        {
+            return Result<ReviewGetDto>.Conflict("You cannot review yourself");
+        }
 
-        var alreadyReviewed = 
-            await _context.Reviews.AnyAsync(r => 
-                r.ReviewerId == currentUserId && 
-                r.ReviewedUserId == userId && 
-                r.RideId == reviewCreateDto.RideId);
+        var alreadyReviewed = ride.Reviews.Any(r => 
+            r.ReviewerId == currentUserId && r.ReviewedUserId == userId);
 
         if (alreadyReviewed)
         {
@@ -112,6 +103,11 @@ public class ReviewService
                 "You have already reviewed this user for this ride"
             );
         }
+        
+        var targetUser = target.User;
+        
+        targetUser.Karma = (targetUser.Karma * targetUser.ReviewsCount + reviewCreateDto.Karma) / (targetUser.ReviewsCount + 1);
+        targetUser.ReviewsCount++;
         
         var review = new Review
         {
@@ -125,28 +121,16 @@ public class ReviewService
         
         await _context.Reviews.AddAsync(review);
         
-        user.Karma = (user.Karma * user.ReviewsCount + reviewCreateDto.Karma) / (user.ReviewsCount + 1);
-        user.ReviewsCount++;
-
-        await _context.Notifications.AddAsync(new Notification
-        {
-            UserId = userId,
-            RideId = reviewCreateDto.RideId,
-            Title = "New review",
-            Message = $"{_currentUserService.Username} reviewed you for the ride",
-            Type = NotificationType.NewReview,
-            SentAt = DateTime.UtcNow,
-            IsRead = false
-        });
+        await _context.Notifications.AddAsync(NotificationFactory.CreateReview(userId, reviewCreateDto.RideId, _currentUserService.Username));
         
         await _context.SaveChangesAsync();
         
         return Result<ReviewGetDto>.Success(new ReviewGetDto(
                 new UserSummaryDto(
-                    user.Id,
-                    user.UserName,
-                    user.ImageUrl,
-                    user.Karma
+                    targetUser.Id,
+                    targetUser.UserName,
+                    targetUser.ImageUrl,
+                    targetUser.Karma
                 ),
             reviewCreateDto.RideId,
             reviewCreateDto.Karma,

@@ -6,7 +6,7 @@ namespace Carma.Application.Validators.User;
 
 public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
 {
-    public UserUpdateValidator(IValidator<LocationCreateDto?> locationValidator)
+    public UserUpdateValidator(IValidator<LocationCreateDto> locationValidator)
     {
         RuleFor(u => u.UserName)
             .MinimumLength(3).WithMessage("Username must be at least 3 characters long")
@@ -18,7 +18,6 @@ public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
             .When(u => !string.IsNullOrEmpty(u.ImageUrl));
         
         RuleFor(u => u.Location)
-            .SetValidator(locationValidator)
-            .When(u => u.Location != null);
+            .SetValidator(locationValidator!);
     }
 }

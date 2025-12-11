@@ -20,4 +20,5 @@ public class Ride
     public User Organizer { get; set; } = null!;
     public ICollection<RideParticipant> Participants { get; set; } = new List<RideParticipant>();
     public ICollection<Message> Messages { get; set; } = new List<Message>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

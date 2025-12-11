@@ -1,8 +1,6 @@
-using Carma.Application.Abstractions;
 using Carma.Application.Abstractions.Repositories;
 using Carma.Application.DTOs.Location;
 using Carma.Application.DTOs.Ride;
-using Carma.Domain.Entities;
 using Carma.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
@@ -27,6 +25,8 @@ public class RideRepository : IRideRepository
             {
                 r.Id,
                 OrganizerName = r.Organizer.UserName,
+                OrganizerKarma = r.Organizer.Karma,
+                OrganizerImage = r.Organizer.ImageUrl,
                 PickupPoint = r.PickupLocation.Coordinate,
                 DropOffPoint = r.DropOffLocation.Coordinate,
                 r.PickupTime,
@@ -40,6 +40,8 @@ public class RideRepository : IRideRepository
         return rides.Select(r => new RideGetDto(
                 r.Id,
                 r.OrganizerName,
+                r.OrganizerKarma,
+                r.OrganizerImage ?? string.Empty,
                 new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
                 new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
                 r.PickupTime,
@@ -62,6 +64,8 @@ public class RideRepository : IRideRepository
             {
                 r.Id,
                 OrganizerName = r.Organizer.UserName,
+                OrganizerKarma = r.Organizer.Karma,
+                OrganizerImage = r.Organizer.ImageUrl,
                 PickupPoint = r.PickupLocation.Coordinate,
                 DropOffPoint = r.DropOffLocation.Coordinate,
                 r.PickupTime,
@@ -75,6 +79,8 @@ public class RideRepository : IRideRepository
         return rides.Select(r => new RideGetDto(
                 r.Id,
                 r.OrganizerName,
+                r.OrganizerKarma,
+                r.OrganizerImage ?? string.Empty,
                 new LocationGetDto(r.PickupPoint.Y, r.PickupPoint.X),
                 new LocationGetDto(r.DropOffPoint.Y, r.DropOffPoint.X),
                 r.PickupTime,

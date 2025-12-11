@@ -27,7 +27,8 @@ public class AuthService
         var validationResult = await _registerValidator.ValidateAsync(requestDto);
         if (!validationResult.IsValid)
         {
-            return Result<AuthResponseDto>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result<AuthResponseDto>.Failure(string.Join("; ", errors));
         }
         
         var user = new User
@@ -41,8 +42,8 @@ public class AuthService
         var createResult = await _userManager.CreateAsync(user, requestDto.Password);
         if (!createResult.Succeeded)
         {
-            var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-            return Result<AuthResponseDto>.Failure(errors);
+            var errors = createResult.Errors.Select(e => e.Description);
+            return Result<AuthResponseDto>.Failure(string.Join("; ", errors));
         }
         var token = _jwtService.GenerateToken(user.Id, user.Email, user.UserName);
         
@@ -54,7 +55,8 @@ public class AuthService
         var validationResult = await _loginValidator.ValidateAsync(requestDto);
         if (!validationResult.IsValid)
         {
-            return Result<AuthResponseDto>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result<AuthResponseDto>.Failure(string.Join("; ", errors));
         }
         
         var user = await _userManager.FindByEmailAsync(requestDto.Email);

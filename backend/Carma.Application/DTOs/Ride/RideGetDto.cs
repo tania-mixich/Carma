@@ -1,11 +1,12 @@
 ﻿using Carma.Application.DTOs.Location;
-using Carma.Domain.Enums;
 
 namespace Carma.Application.DTOs.Ride;
 
 public record RideGetDto(
     int Id,
     string OrganizerName,
+    double Karma,
+    string ImageUrl,
     LocationGetDto PickupLocation,
     LocationGetDto DropOffLocation,
     DateTime PickupTime,

@@ -1,6 +1,7 @@
 using System.Text;
 using Carma.API;
 using Carma.API.Hubs;
+using Carma.API.Services;
 using Carma.Application.Abstractions;
 using Carma.Application.Abstractions.Repositories;
 using Carma.Application.Services;
@@ -55,6 +56,22 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
         };
+        
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/carmaHub"))
+                {
+                    context.Token = accessToken;
+                }
+                
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization();
 
@@ -70,6 +87,8 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSignalR();
+
+builder.Services.AddScoped<IRealTimeNotifier, SignalRNotifierService>();
 
 builder.Services.AddScoped<IRideRepository, RideRepository>();
 
@@ -135,6 +154,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<ChatHub>("/chathub");
+app.MapHub<CarmaHub>("/carmaHub");
 
 app.Run();
