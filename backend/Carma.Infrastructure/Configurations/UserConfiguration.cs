@@ -23,11 +23,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         {
             location.Property(l => l.Coordinate)
                 .HasColumnName("Coordinate")
-                .IsRequired()
                 .HasColumnType("geography(Point, 4326)");
             
             location.HasIndex(l => l.Coordinate)
                 .HasMethod("gist");
+            
+            location.Property(l => l.Address).HasColumnName("Address").HasMaxLength(255);
+            location.Property(l => l.City).HasColumnName("City").HasMaxLength(100);
+            location.Property(l => l.Country).HasColumnName("Country").HasMaxLength(100);
         });
         builder.Navigation(u => u.Location).IsRequired(false);
     }

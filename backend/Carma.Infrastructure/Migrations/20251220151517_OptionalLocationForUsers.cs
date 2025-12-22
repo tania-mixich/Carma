@@ -5,7 +5,7 @@
 namespace Carma.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class NullableFieldsFix : Migration
+    public partial class OptionalLocationForUsers : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

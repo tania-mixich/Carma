@@ -30,6 +30,19 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
             
             location.HasIndex(l => l.Coordinate)
                 .HasMethod("gist");
+            
+            location.Property(l => l.Address)
+                .HasColumnName("PickupAddress")
+                .HasMaxLength(255)
+                .IsRequired();
+
+            location.Property(l => l.City)
+                .HasColumnName("PickupCity")
+                .HasMaxLength(100);
+            
+            location.Property(l => l.Country)
+                .HasColumnName("PickupCountry")
+                .HasMaxLength(100);
         });
 
         builder.OwnsOne(r => r.DropOffLocation, location =>
@@ -41,6 +54,19 @@ public class RideConfiguration : IEntityTypeConfiguration<Ride>
             
             location.HasIndex(l => l.Coordinate)
                 .HasMethod("gist");
+            
+            location.Property(l => l.Address)
+                .HasColumnName("DropOffAddress")
+                .HasMaxLength(255)
+                .IsRequired();
+            
+            location.Property(l => l.City)
+                .HasColumnName("DropOffCity")
+                .HasMaxLength(100);
+            
+            location.Property(l => l.Country)
+                .HasColumnName("DropOffCountry")
+                .HasMaxLength(100);
         });
         
         builder.HasOne(r => r.Organizer)

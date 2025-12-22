@@ -99,7 +99,7 @@ public class RideParticipantService
         
         return Result<RideParticipantGetDto>.Success(
             new RideParticipantGetDto(
-                user.UserName,
+                user.UserName ?? string.Empty,
                 user.ImageUrl,
                 user.Karma,
                 requestedParticipant.Role.ToString()
@@ -197,7 +197,7 @@ public class RideParticipantService
         }
 
         return Result<RideParticipantGetDto?>.Success(new RideParticipantGetDto(
-            participant.User.UserName, 
+            participant.User.UserName ?? string.Empty, 
             participant.User.ImageUrl, 
             participant.User.Karma, 
             participant.Role.ToString())
@@ -238,7 +238,7 @@ public class RideParticipantService
         rideParticipant.Status = ParticipantStatus.Left;
         rideParticipant.LeftAt = DateTime.UtcNow;
 
-        var notification = NotificationFactory.CreateLeftRide(ride.OrganizerId, rideId, rideParticipant.User.UserName);
+        var notification = NotificationFactory.CreateLeftRide(ride.OrganizerId, rideId, rideParticipant.User.UserName ?? string.Empty);
         
         await _context.Notifications.AddAsync(notification);
         await _context.SaveChangesAsync();

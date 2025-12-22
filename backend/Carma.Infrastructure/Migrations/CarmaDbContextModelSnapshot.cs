@@ -516,10 +516,26 @@ namespace Carma.Infrastructure.Migrations
                             b1.Property<int>("RideId")
                                 .HasColumnType("integer");
 
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("DropOffAddress");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DropOffCity");
+
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("DropOffCoordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DropOffCountry");
 
                             b1.HasKey("RideId");
 
@@ -538,10 +554,26 @@ namespace Carma.Infrastructure.Migrations
                             b1.Property<int>("RideId")
                                 .HasColumnType("integer");
 
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("PickupAddress");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("PickupCity");
+
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("PickupCoordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("PickupCountry");
 
                             b1.HasKey("RideId");
 
@@ -590,10 +622,26 @@ namespace Carma.Infrastructure.Migrations
                             b1.Property<Guid>("UserId")
                                 .HasColumnType("uuid");
 
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("Address");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("City");
+
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("Coordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("Country");
 
                             b1.HasKey("UserId");
 

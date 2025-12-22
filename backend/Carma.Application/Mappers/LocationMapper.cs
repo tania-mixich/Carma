@@ -7,6 +7,11 @@ public static class LocationMapper
 {
     public static Location MapToLocation(LocationCreateDto locationCreateDto)
     {
-        return new Location(locationCreateDto.Latitude, locationCreateDto.Longitude);
+        return new Location(
+            locationCreateDto.Latitude, 
+            locationCreateDto.Longitude, 
+            locationCreateDto.Address ?? "Unknown location", 
+            locationCreateDto.City, 
+            locationCreateDto.Country);
     }
 }

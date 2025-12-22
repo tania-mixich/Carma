@@ -37,7 +37,7 @@ public class ReviewService
             .Select(r => new ReviewGetDto(
                     new UserSummaryDto(
                         r.Reviewer.Id,
-                        r.Reviewer.UserName,
+                        r.Reviewer.UserName!,
                         r.Reviewer.ImageUrl,
                         r.Reviewer.Karma
                         ),
@@ -88,7 +88,6 @@ public class ReviewService
             return Result<ReviewGetDto>.Conflict("You cannot review a participant that is not in the ride");
         }
         
-        
         if (target.UserId == currentUserId)
         {
             return Result<ReviewGetDto>.Conflict("You cannot review yourself");
@@ -128,7 +127,7 @@ public class ReviewService
         return Result<ReviewGetDto>.Success(new ReviewGetDto(
                 new UserSummaryDto(
                     targetUser.Id,
-                    targetUser.UserName,
+                    targetUser.UserName ?? string.Empty,
                     targetUser.ImageUrl,
                     targetUser.Karma
                 ),

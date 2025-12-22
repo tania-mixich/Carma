@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -12,6 +13,9 @@ namespace Carma.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:postgis", ",,");
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -32,15 +36,18 @@ namespace Carma.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
-                    Latitude = table.Column<double>(type: "double precision", nullable: true),
-                    Longitude = table.Column<double>(type: "double precision", nullable: true),
+                    Coordinate = table.Column<Point>(type: "geography(Point, 4326)", nullable: true),
                     Address = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    Karma = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Country = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Karma = table.Column<double>(type: "double precision", nullable: false, defaultValue: 0.0),
+                    ReviewsCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    RidesCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: true),
@@ -171,18 +178,20 @@ namespace Carma.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     OrganizerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    PickupLatitude = table.Column<double>(type: "double precision", nullable: false),
-                    PickupLongitude = table.Column<double>(type: "double precision", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PickupCoordinate = table.Column<Point>(type: "geography(Point, 4326)", nullable: false),
                     PickupAddress = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    DropOffLatitude = table.Column<double>(type: "double precision", nullable: false),
-                    DropOffLongitude = table.Column<double>(type: "double precision", nullable: false),
+                    PickupCity = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    PickupCountry = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    DropOffCoordinate = table.Column<Point>(type: "geography(Point, 4326)", nullable: false),
                     DropOffAddress = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    DropOffCity = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    DropOffCountry = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     PickupTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Price = table.Column<double>(type: "double precision", nullable: false),
-                    AvailableSeats = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
+                    Seats = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Available")
                 },
                 constraints: table =>
                 {
@@ -204,7 +213,7 @@ namespace Carma.Infrastructure.Migrations
                     RideId = table.Column<int>(type: "integer", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Text = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -230,10 +239,11 @@ namespace Carma.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RideId = table.Column<int>(type: "integer", nullable: true),
+                    RideId = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Title = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Message = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
@@ -243,7 +253,8 @@ namespace Carma.Infrastructure.Migrations
                         name: "FK_Notifications_Rides_RideId",
                         column: x => x.RideId,
                         principalTable: "Rides",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_UserId",
                         column: x => x.UserId,
@@ -261,8 +272,8 @@ namespace Carma.Infrastructure.Migrations
                     ReviewerId = table.Column<Guid>(type: "uuid", nullable: false),
                     ReviewedUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     RideId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    Karma = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Karma = table.Column<double>(type: "double precision", nullable: false),
                     Text = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
@@ -294,10 +305,12 @@ namespace Carma.Infrastructure.Migrations
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     RideId = table.Column<int>(type: "integer", nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     AcceptedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsAccepted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    RideRole = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
+                    RejectedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LeftAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -383,14 +396,32 @@ namespace Carma.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rides_DropOffCoordinate",
+                table: "Rides",
+                column: "DropOffCoordinate")
+                .Annotation("Npgsql:IndexMethod", "gist");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rides_OrganizerId",
                 table: "Rides",
                 column: "OrganizerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rides_PickupCoordinate",
+                table: "Rides",
+                column: "PickupCoordinate")
+                .Annotation("Npgsql:IndexMethod", "gist");
+
+            migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "Users",
                 column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Coordinate",
+                table: "Users",
+                column: "Coordinate")
+                .Annotation("Npgsql:IndexMethod", "gist");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",

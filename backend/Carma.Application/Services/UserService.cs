@@ -28,7 +28,7 @@ public class UserService
             .AsNoTracking()
             .Select(u => new UserSummaryDto(
                 u.Id, 
-                u.UserName!, 
+                u.UserName ?? string.Empty, 
                 u.ImageUrl, 
                 u.Karma)
             )
@@ -48,7 +48,7 @@ public class UserService
         {
             return Result<object>.Success(new UserSelfDto(
                 userId,
-                user.UserName!,
+                user.UserName ?? string.Empty,
                 user.Email!,
                 user.ImageUrl,
                 user.Karma,
@@ -60,7 +60,7 @@ public class UserService
         
         return Result<object>.Success(new UserProfileDto(
             userId,
-            user.UserName!,
+            user.UserName ?? string.Empty,
             user.ImageUrl,
             user.Karma,
             user.RidesCount
@@ -107,8 +107,8 @@ public class UserService
         
         return Result<UserSelfDto>.Success(new UserSelfDto(
                 user.Id,
-                user.UserName!,
-                user.Email!,
+                user.UserName ?? string.Empty,
+                user.Email ?? string.Empty,
                 user.ImageUrl,
                 user.Karma,
                 user.RidesCount,

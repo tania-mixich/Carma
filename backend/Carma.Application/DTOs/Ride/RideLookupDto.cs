@@ -10,7 +10,13 @@ public class RideLookupDto
     public double OrganizerKarma { get; set; }
     public string? OrganizerImageUrl { get; set; }
     public Point PickupPoint { get; set; } = null!;
+    public string PickupAddress { get; set; } = string.Empty;
+    public string PickupCity { get; set; } = string.Empty;
+    public string PickupCountry { get; set; } = string.Empty;
     public Point DropoffPoint { get; set; } = null!;
+    public string DropoffAddress { get; set; } = string.Empty;
+    public string DropoffCity { get; set; } = string.Empty;
+    public string DropoffCountry { get; set; } = string.Empty;
     public DateTime PickupTime { get; set; }
     public double Price { get; set; }
     public int Seats { get; set; }

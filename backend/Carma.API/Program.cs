@@ -89,6 +89,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSignalR();
 
 builder.Services.AddScoped<IRealTimeNotifier, SignalRNotifierService>();
+builder.Services.AddHttpClient<IGeocodingService, GeocodingService>();
 
 builder.Services.AddScoped<IRideRepository, RideRepository>();
 
@@ -137,6 +138,20 @@ builder.Services.AddSwaggerGen(options =>
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DataSeeder.SeedAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

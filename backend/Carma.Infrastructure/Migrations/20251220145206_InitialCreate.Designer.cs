@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Carma.Infrastructure.Migrations
 {
     [DbContext(typeof(CarmaDbContext))]
-    [Migration("20251030164032_AddRideCountProperty")]
-    partial class AddRideCountProperty
+    [Migration("20251220145206_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -151,9 +151,6 @@ namespace Carma.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AvailableSeats")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -165,6 +162,9 @@ namespace Carma.Infrastructure.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("double precision");
+
+                    b.Property<int>("Seats")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -194,20 +194,24 @@ namespace Carma.Infrastructure.Migrations
                     b.Property<DateTime?>("AcceptedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsAccepted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                    b.Property<DateTime?>("LeftAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("RideRole")
+                    b.Property<string>("Role")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("NotAssigned");
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("RideId", "UserId");
 
@@ -233,8 +237,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
@@ -290,8 +295,9 @@ namespace Carma.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
 
@@ -488,7 +494,7 @@ namespace Carma.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Carma.Domain.Entities.Ride", "Ride")
-                        .WithMany()
+                        .WithMany("Reviews")
                         .HasForeignKey("RideId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -514,14 +520,25 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("DropOffAddress");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DropOffCity");
 
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("DropOffCoordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DropOffCountry");
 
                             b1.HasKey("RideId");
 
@@ -541,14 +558,25 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("PickupAddress");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("PickupCity");
 
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("PickupCoordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("PickupCountry");
 
                             b1.HasKey("RideId");
 
@@ -598,14 +626,25 @@ namespace Carma.Infrastructure.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<string>("Address")
+                                .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)")
                                 .HasColumnName("Address");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("City");
 
                             b1.Property<Point>("Coordinate")
                                 .IsRequired()
                                 .HasColumnType("geography(Point, 4326)")
                                 .HasColumnName("Coordinate");
+
+                            b1.Property<string>("Country")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("Country");
 
                             b1.HasKey("UserId");
 
@@ -678,6 +717,8 @@ namespace Carma.Infrastructure.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Participants");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("Carma.Domain.Entities.User", b =>

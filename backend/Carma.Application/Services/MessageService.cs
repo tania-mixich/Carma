@@ -48,7 +48,7 @@ public class MessageService
             .Where(m => m.RideId == rideId)
             .OrderBy(m => m.SentAt)
             .Select(m => new MessageGetDto(
-                m.User.UserName, 
+                m.User.UserName ?? string.Empty, 
                 m.Text,
                 m.SentAt
                 )
@@ -63,7 +63,8 @@ public class MessageService
         var validationResult = await _createValidator.ValidateAsync(messageCreateDto);
         if (!validationResult.IsValid)
         {
-            return Result<MessageGetDto>.Failure(validationResult.Errors.Select(e => e.ErrorMessage).First());
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result<MessageGetDto>.Failure(string.Join("; ", errors));
         }
         
         var ride = await _context.Rides
@@ -96,9 +97,8 @@ public class MessageService
 
         var notifications = ride.Participants
             .Where(rp => rp.UserId != userId && rp.Status == ParticipantStatus.Accepted)
-            .Select(rp => rp.UserId)
-            .Select(participantId =>
-                NotificationFactory.CreateMessage(participantId, rideId, _currentUserService.Username))
+            .Select(rp =>
+                NotificationFactory.CreateMessage(rp.UserId, rideId, _currentUserService.Username))
             .ToList();
         
         if (notifications.Any())

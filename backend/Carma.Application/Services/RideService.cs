@@ -12,6 +12,7 @@ using Carma.Domain.Factories;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using Location = Carma.Domain.ValueObjects.Location;
 
 namespace Carma.Application.Services;
 
@@ -23,8 +24,9 @@ public class RideService
     private readonly IValidator<RideCreateDto> _createValidator;
     private readonly IValidator<RideUpdateDto> _updateValidator;
     private readonly IRealTimeNotifier _realTimeNotifier;
+    private readonly IGeocodingService _geocodingService;
 
-    public RideService(ICarmaDbContext context,ICurrentUserService currentUserService, IRideRepository rideRepository, IValidator<RideCreateDto> createValidator, IValidator<RideUpdateDto> updateValidator, IRealTimeNotifier realTimeNotifier)
+    public RideService(ICarmaDbContext context,ICurrentUserService currentUserService, IRideRepository rideRepository, IValidator<RideCreateDto> createValidator, IValidator<RideUpdateDto> updateValidator, IRealTimeNotifier realTimeNotifier, IGeocodingService geocodingService)
     {
         _context = context;
         _currentUserService = currentUserService;
@@ -32,6 +34,7 @@ public class RideService
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _realTimeNotifier = realTimeNotifier;
+        _geocodingService = geocodingService;
     }
 
     public async Task<Result<IEnumerable<RideGetDto>>> GetAllRidesAsync()
@@ -41,11 +44,17 @@ public class RideService
             .Select(r => new RideLookupDto
             {
                 Id = r.Id,
-                OrganizerName = r.Organizer.UserName,
+                OrganizerName = r.Organizer.UserName ?? string.Empty,
                 OrganizerKarma = r.Organizer.Karma,
                 OrganizerImageUrl = r.Organizer.ImageUrl,
-                PickupPoint = r.PickupLocation.Coordinate, 
+                PickupPoint = r.PickupLocation.Coordinate,
+                PickupAddress = r.PickupLocation.Address,
+                PickupCity = r.PickupLocation.City ?? string.Empty,
+                PickupCountry = r.PickupLocation.Country ?? string.Empty,
                 DropoffPoint = r.DropOffLocation.Coordinate,
+                DropoffAddress = r.DropOffLocation.Address,
+                DropoffCity = r.DropOffLocation.City ?? string.Empty,
+                DropoffCountry = r.DropOffLocation.Country ?? string.Empty,
                 PickupTime = r.PickupTime,
                 Price = r.Price,
                 Seats = r.Seats,
@@ -90,11 +99,17 @@ public class RideService
             .Select(r => new RideLookupDto
             {
                 Id = r.Id,
-                OrganizerName = r.Organizer.UserName,
+                OrganizerName = r.Organizer.UserName ?? string.Empty,
                 OrganizerKarma = r.Organizer.Karma,
                 OrganizerImageUrl = r.Organizer.ImageUrl,
                 PickupPoint = r.PickupLocation.Coordinate, 
+                PickupAddress = r.PickupLocation.Address,
+                PickupCity = r.PickupLocation.City ?? string.Empty,
+                PickupCountry = r.PickupLocation.Country ?? string.Empty,
                 DropoffPoint = r.DropOffLocation.Coordinate,
+                DropoffAddress = r.DropOffLocation.Address,
+                DropoffCity = r.DropOffLocation.City ?? string.Empty,
+                DropoffCountry = r.DropOffLocation.Country ?? string.Empty,
                 PickupTime = r.PickupTime,
                 Price = r.Price,
                 Seats = r.Seats,
@@ -116,8 +131,8 @@ public class RideService
             .Select(r => new
             {
                 r.Id,
-                PickupPoint = r.PickupLocation.Coordinate,
-                DropOffPoint = r.DropOffLocation.Coordinate,
+                r.PickupLocation,
+                r.DropOffLocation,
                 r.PickupTime,
                 r.Price,
                 r.Seats,
@@ -142,15 +157,27 @@ public class RideService
         var acceptedCount = ride.Participants.Count;
 
         var rideDto = new RideDetailsDto(
-            new LocationGetDto(ride.PickupPoint.Y, ride.PickupPoint.X),
-            new LocationGetDto(ride.DropOffPoint.Y, ride.DropOffPoint.X),
+            new LocationGetDto(
+                ride.PickupLocation.Coordinate.Y, 
+                ride.PickupLocation.Coordinate.X,
+                ride.PickupLocation.Address,
+                ride.PickupLocation.City ?? string.Empty,
+                ride.PickupLocation.Country ?? string.Empty
+                ),
+            new LocationGetDto(
+                ride.DropOffLocation.Coordinate.Y, 
+                ride.DropOffLocation.Coordinate.X,
+                ride.DropOffLocation.Address,
+                ride.DropOffLocation.City ?? string.Empty,
+                ride.DropOffLocation.Country ?? string.Empty
+                ),
             ride.PickupTime,
             acceptedCount > 0 ? ride.Price / acceptedCount: ride.Price,
             ride.Seats - acceptedCount,
             ride.Status.ToString(),
             ride.Participants
                 .Select(rp => new RideParticipantGetDto(
-                rp.UserName,
+                rp.UserName ?? string.Empty,
                 rp.ImageUrl,
                 rp.Karma,
                 rp.Role.ToString()
@@ -175,8 +202,38 @@ public class RideService
         {
             return Result<RideGetDto>.NotFound("User not found");
         }
+
+        Location pickupLocation;
+        if (!string.IsNullOrEmpty(rideCreateDto.PickupLocation.Address))
+        {
+            pickupLocation = new Location(rideCreateDto.PickupLocation.Latitude,
+                rideCreateDto.PickupLocation.Longitude,
+                rideCreateDto.PickupLocation.Address,
+                rideCreateDto.PickupLocation.City,
+                rideCreateDto.PickupLocation.Country
+                );
+        }
+        else
+        {
+            pickupLocation = await _geocodingService.GetLocationFromCoordinatesAsync(rideCreateDto.PickupLocation.Latitude, rideCreateDto.PickupLocation.Longitude);
+        }
         
-        var ride = RideMapper.MapToRide(rideCreateDto);
+        Location dropOffLocation;
+        if (!string.IsNullOrEmpty(rideCreateDto.DropOffLocation.Address))
+        {
+            dropOffLocation = new Location(rideCreateDto.DropOffLocation.Latitude,
+                rideCreateDto.DropOffLocation.Longitude,
+                rideCreateDto.DropOffLocation.Address,
+                rideCreateDto.DropOffLocation.City,
+                rideCreateDto.DropOffLocation.Country
+                );
+        }
+        else
+        {
+            dropOffLocation = await _geocodingService.GetLocationFromCoordinatesAsync(rideCreateDto.DropOffLocation.Latitude, rideCreateDto.DropOffLocation.Longitude);
+        }
+        
+        var ride = RideMapper.MapToRide(rideCreateDto, pickupLocation, dropOffLocation);
         ride.OrganizerId = userId;
         
         ride.Participants.Add(new RideParticipant
@@ -197,11 +254,22 @@ public class RideService
             _currentUserService.Username,
             user.Karma,
             user.ImageUrl ?? string.Empty,
-            new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
-            new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
+            new LocationGetDto(
+                ride.PickupLocation.Coordinate.Y, 
+                ride.PickupLocation.Coordinate.X,
+                ride.PickupLocation.Address,
+                ride.PickupLocation.City ?? string.Empty,
+                ride.PickupLocation.Country ?? string.Empty
+                ),
+            new LocationGetDto(
+                ride.DropOffLocation.Coordinate.Y, 
+                ride.DropOffLocation.Coordinate.X, 
+                ride.DropOffLocation.Address, 
+                ride.DropOffLocation.City ?? string.Empty, 
+                ride.DropOffLocation.Country ?? string.Empty),
             ride.PickupTime,
             ride.Price,
-            ride.Seats - 1,
+            ride.Seats,
             ride.Status.ToString()
             )
         );
@@ -251,11 +319,23 @@ public class RideService
         
         return Result<RideGetDto>.Success(new RideGetDto(
             ride.Id,
-            ride.Organizer.UserName,
+            ride.Organizer.UserName ?? string.Empty,
             ride.Organizer.Karma,
             ride.Organizer.ImageUrl ?? string.Empty,
-            new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
-            new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
+            new LocationGetDto(
+                ride.PickupLocation.Coordinate.Y, 
+                ride.PickupLocation.Coordinate.X, 
+                ride.PickupLocation.Address, 
+                ride.PickupLocation.City ?? string.Empty, 
+                ride.PickupLocation.Country ?? string.Empty
+                ),
+            new LocationGetDto(
+                ride.DropOffLocation.Coordinate.Y, 
+                ride.DropOffLocation.Coordinate.X, 
+                ride.DropOffLocation.Address, 
+                ride.DropOffLocation.City ?? string.Empty, 
+                ride.DropOffLocation.Country ?? string.Empty
+                ),
             ride.PickupTime,
             acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
             ride.Seats - acceptedCount,
@@ -351,11 +431,23 @@ public class RideService
         
         return Result<RideGetDto>.Success(new RideGetDto(
             ride.Id,
-            ride.Organizer.UserName,
+            ride.Organizer.UserName ?? string.Empty,
             ride.Organizer.Karma,
             ride.Organizer.ImageUrl ?? string.Empty,
-            new LocationGetDto(ride.PickupLocation.Coordinate.Y, ride.PickupLocation.Coordinate.X),
-            new LocationGetDto(ride.DropOffLocation.Coordinate.Y, ride.DropOffLocation.Coordinate.X),
+            new LocationGetDto(
+                ride.PickupLocation.Coordinate.Y, 
+                ride.PickupLocation.Coordinate.X,
+                ride.PickupLocation.Address,
+                ride.PickupLocation.City ?? string.Empty,
+                ride.PickupLocation.Country ?? string.Empty
+                ),
+            new LocationGetDto(
+                ride.DropOffLocation.Coordinate.Y, 
+                ride.DropOffLocation.Coordinate.X,
+                ride.DropOffLocation.Address,
+                ride.DropOffLocation.City ?? string.Empty,
+                ride.DropOffLocation.Country ?? string.Empty
+                ),
             ride.PickupTime,
             acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
             ride.Seats - acceptedCount,
