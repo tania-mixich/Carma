@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gradient_app_bar_plus/flutter_gradient_app_bar_plus.dart';
 import 'package:frontend/features/auth/logic/auth_cubit.dart';
-import 'package:frontend/features/home/presentation/widgets/radius_filters_button.dart';
+import 'package:frontend/features/home/presentation/widgets/post_ride_button.dart';
 import 'package:frontend/features/home/presentation/widgets/ride_card.dart';
+import 'package:frontend/features/home/presentation/widgets/rides_search_bar.dart';
 import 'package:frontend/features/rides/logic/ride_list_cubit.dart';
 import 'package:frontend/features/rides/logic/ride_list_state.dart';
 import 'package:frontend/shared/widgets/background_colors.dart';
@@ -13,10 +14,6 @@ import 'package:frontend/shared/widgets/bg_colors_gradient.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  double adaptiveHeight(double screenHeight, double percent) {
-    return (screenHeight * percent).clamp(50.0, 70.0);
-  }
 
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour;
@@ -191,76 +188,13 @@ class HomeScreen extends StatelessWidget {
                         
                             SizedBox(height: screenHeight * 0.025),
                                       
-                            /// ----------------------------------------------------------
                             /// SEARCH BAR
-                            
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-                              height: adaptiveHeight(screenHeight, 0.06),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  )
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.search,
-                                    size: screenWidth * 0.07,
-                                    color: Colors.grey
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                    
-                                  Expanded(
-                                    child: TextField(
-                                      keyboardType: TextInputType.streetAddress,
-                                      decoration: InputDecoration(
-                                        hintText: "Where are you going?",
-                                        border: InputBorder.none,
-                                      ),
-                                    ),
-                                  ),
-                    
-                                  RadiusFiltersButton(),
-                                ],
-                              ),
-                            ),
+                            RidesSearchBar(),
                                       
                             SizedBox(height: screenHeight * 0.035),
                                       
-                            /// ----------------------------------------------------------
                             /// POST YOUR RIDE BUTTON
-                            
-                            Container(
-                              width: double.infinity,
-                              height: adaptiveHeight(screenHeight, 0.06),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Colors.deepOrange, 
-                                    Colors.orangeAccent,
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: TextButton(
-                                onPressed: () {},
-                                child: Text(
-                                  "+ Post Your Ride",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: screenWidth * 0.05,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            PostRideButton(),
                                       
                             SizedBox(height: screenHeight * 0.04),
                                       
@@ -382,20 +316,19 @@ class HomeScreen extends StatelessWidget {
                                       else
                                         ...rides.map((ride) {
                                           return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 15),
+                                            padding: const EdgeInsets.only(bottom: 15),
                                             child: RideCard(
                                               name: ride.organizerName,
-                                              rating: 0.0,                            // TODO: get organizer rating
+                                              rating: ride.karma,
                                               seatsLeft: ride.availableSeats,
-                                              from: "Pickup Location",               // TODO: format location
-                                              to: "Dropoff Location",
+                                              from: ride.pickupLocation.address ?? "Unknown",
+                                              to: ride.dropOffLocation.address ?? "Unknown",
                                               time: "Pickup: ${_formatTime(ride.pickupTime)}",
                                               price: "\$${ride.pricePerSeat.toStringAsFixed(2)}",
-                                              imageUrl: "https://i.imgur.com/BoN9kdC.png", // TODO: get organizer photo
+                                              imageUrl: ride.imageUrl ?? "https://i.imgur.com/BoN9kdC.png",
                                             ),
                                           );
-                                        }).toList(),
+                                        }),
 
                                       const SizedBox(height: 30),
                                     ],

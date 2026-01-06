@@ -5,6 +5,8 @@ import 'package:frontend/domain/models/ride_participant.dart';
 class Ride {
   final int id;
   final String organizerName;
+  final double karma;
+  final String? imageUrl;
   final Location pickupLocation;
   final Location dropOffLocation;
   final DateTime pickupTime;
@@ -16,6 +18,8 @@ class Ride {
   Ride({
     required this.id,
     required this.organizerName,
+    this.karma = 0.0,
+    this.imageUrl,
     required this.pickupLocation,
     required this.dropOffLocation,
     required this.pickupTime,
@@ -26,13 +30,16 @@ class Ride {
   });
 
   // For RideGetDto
-  // TODO: maybe pass organizer rating from backend - also to details
+  // TODO: pass location address from backend, to avoid extra requests in fe - same for details
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
       id: json['id'],
       organizerName: json['organizerName'],
-      pickupLocation: Location.fromJson(json['pickupLocation']),
-      dropOffLocation: Location.fromJson(json['dropOffLocation']),
+      karma: (json['karma'] ?? 0.0).toDouble(),
+      imageUrl: ((json['imageUrl'] as String).isEmpty || json['imageUrl'] == null) 
+                ? "https://i.imgur.com/BoN9kdC.png" : json['imageUrl'],
+      pickupLocation: Location.fromGetJson(json['pickupLocation']),
+      dropOffLocation: Location.fromGetJson(json['dropOffLocation']),
       pickupTime: DateTime.parse(json['pickupTime']),
       pricePerSeat: (json['pricePerSeat'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,
@@ -41,13 +48,13 @@ class Ride {
   }
 
   // For RideDetailsDto
-  // TODO: pass organizerName to details model from backend
+  // TODO: pass organizerName, rating, image to get from participants
   factory Ride.fromDetailsJson(Map<String, dynamic> json, int id, String organizerName) {
     return Ride(
       id: id,
       organizerName: organizerName,
-      pickupLocation: Location.fromJson(json['pickupLocation']),
-      dropOffLocation: Location.fromJson(json['dropOffLocation']),
+      pickupLocation: Location.fromGetJson(json['pickupLocation']),
+      dropOffLocation: Location.fromGetJson(json['dropOffLocation']),
       pickupTime: DateTime.parse(json['pickupTime']),
       pricePerSeat: (json['price'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,

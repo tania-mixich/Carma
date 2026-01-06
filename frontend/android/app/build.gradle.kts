@@ -10,6 +10,10 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -41,4 +45,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("io.radar:sdk:3.12.4")
 }
