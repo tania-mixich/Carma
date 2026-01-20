@@ -43,7 +43,8 @@ public static class RideMapper
             raw.PickupTime,
             raw.AcceptedCount > 0 ? raw.Price / raw.AcceptedCount : raw.Price,
             raw.Seats - raw.AcceptedCount,
-            raw.Status.ToString()
+            raw.Status.ToString(),
+            raw.UserStatus
         );
     }
 }

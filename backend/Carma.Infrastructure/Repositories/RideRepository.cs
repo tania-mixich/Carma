@@ -15,11 +15,12 @@ public class RideRepository : IRideRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<RideGetDto>> GetNearbyRidesAsync(Point startLocation, int radius)
+    public async Task<IEnumerable<RideGetDto>> GetNearbyRidesAsync(Point startLocation, int radius, Guid userId)
     {
         var rides = await _context.Rides
             .AsNoTracking()
             .Where(r => r.Status == Status.Available &&
+                        r.PickupTime > DateTime.UtcNow &&
                         r.PickupLocation.Coordinate.IsWithinDistance(startLocation, radius))
             .Select(r => new
             {
@@ -39,7 +40,12 @@ public class RideRepository : IRideRepository
                 r.Price,
                 r.Seats,
                 r.Status,
-                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted)
+                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted),
+                UserStatus = r.OrganizerId == userId ? "Organizer" : 
+                    r.Participants
+                    .Where(p => p.UserId == userId)
+                    .Select(p => p.Status.ToString())
+                    .FirstOrDefault() ?? "None",
             })
             .ToListAsync();
 
@@ -65,17 +71,19 @@ public class RideRepository : IRideRepository
                 r.PickupTime,
                 r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
                 r.Seats - r.AcceptedCount,
-                r.Status.ToString()
+                r.Status.ToString(),
+                r.UserStatus
                 )
             );
     }
 
     public async Task<IEnumerable<RideGetDto>> GetNearbyRidesHeadingToTheLocationAsync(Point startLocation, int startRadius, Point endLocation,
-        int endRadius)
+        int endRadius, Guid userId)
     {
         var rides = await _context.Rides
             .AsNoTracking()
             .Where(r => r.Status == Status.Available && 
+                        r.PickupTime > DateTime.UtcNow &&
                         r.PickupLocation.Coordinate.IsWithinDistance(startLocation, startRadius) &&
                         r.DropOffLocation.Coordinate.IsWithinDistance(endLocation, endRadius))
             .Select(r => new
@@ -96,7 +104,12 @@ public class RideRepository : IRideRepository
                 r.Price,
                 r.Seats,
                 r.Status,
-                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted)
+                AcceptedCount = r.Participants.Count(rp => rp.Status == ParticipantStatus.Accepted),
+                UserStatus = r.OrganizerId == userId ? "Organizer" : 
+                    r.Participants
+                        .Where(p => p.UserId == userId)
+                        .Select(p => p.Status.ToString())
+                        .FirstOrDefault() ?? "None",
             })
             .ToListAsync();
 
@@ -122,7 +135,8 @@ public class RideRepository : IRideRepository
                 r.PickupTime,
                 r.AcceptedCount > 0 ? r.Price / r.AcceptedCount : r.Price,
                 r.Seats - r.AcceptedCount,
-                r.Status.ToString()
+                r.Status.ToString(),
+                r.UserStatus
             )
         );
     }

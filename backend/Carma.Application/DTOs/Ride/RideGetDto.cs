@@ -12,5 +12,6 @@ public record RideGetDto(
     DateTime PickupTime,
     double PricePerSeat,
     int AvailableSeats,
-    string Status
+    string Status,
+    string UserStatus
 );

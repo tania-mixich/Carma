@@ -41,6 +41,13 @@ class Location {
     'country': country ?? "",
   };
 
+  Map<String, double> toMap() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+  }
+
   Location copyWith({
     double? latitude,
     double? longitude,

@@ -14,8 +14,9 @@ class RideParticipantCubit extends Cubit<RideParticipantState> {
     
     try {
       await _repository.requestToJoinRide(rideId);
-      emit(RideParticipantSuccess('Join request sent successfully'));
+      emit(RideParticipantSuccess('Join request sent successfully', rideId: rideId));
     } catch (e) {
+      print('Join Error: $e');
       emit(RideParticipantError(e.toString()));
     }
   }

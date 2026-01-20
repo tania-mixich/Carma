@@ -25,7 +25,7 @@ public class RideParticipantController : ControllerBase
 
         if (result.IsSuccess)
         {
-            return CreatedAtAction(nameof(RequestToJoin), new { rideId }, null);
+            return CreatedAtAction(nameof(RequestToJoin), new { rideId }, result.Value);
         }
         return result.ToActionResult();
     }

@@ -89,4 +89,20 @@ class RideListCubit extends Cubit<RideListState> {
       'dropoff': await _queryStorage.getDropoffRadius(),
     };
   }
+
+  void updateRideUserStatus(int rideId, String newStatus) {
+    if (state is RideListLoaded) {
+      final currentState = state as RideListLoaded;
+      
+      final updatedRides = currentState.rides.map((ride) {
+        return ride.id == rideId ? ride.copyWith(userStatus: newStatus) : ride;
+      }).toList();
+
+      emit(RideListLoaded(
+        rides: updatedRides,
+        pickupRadius: currentState.pickupRadius,
+        dropoffRadius: currentState.dropoffRadius,
+      ));
+    }
+  }
 }

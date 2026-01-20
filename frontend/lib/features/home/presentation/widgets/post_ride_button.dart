@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/rides/presentation/post_ride_screen.dart';
 
 class PostRideButton extends StatelessWidget {
   const PostRideButton({super.key});
@@ -25,7 +26,13 @@ class PostRideButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
       ),
       child: TextButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PostRideScreen(),
+            ),
+          );
+        },
         child: Text(
           "+ Post Your Ride",
           style: TextStyle(

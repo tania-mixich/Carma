@@ -4,9 +4,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/core/services/mapbox_service.dart';
+import 'package:frontend/core/services/ride_query_storage_service.dart';
+import 'package:frontend/domain/models/location.dart';
 import 'package:frontend/features/auth/logic/auth_cubit.dart';
-import 'package:frontend/features/home/presentation/widgets/radius_filters_button.dart';
 import 'package:frontend/features/location/data/models/mapbox_suggestion.dart';
+import 'package:frontend/features/location/presentation/radar_map_screen.dart';
 import 'package:frontend/features/rides/logic/ride_list_cubit.dart';
 
 class RidesSearchBar extends StatefulWidget {
@@ -23,6 +25,9 @@ class _RidesSearchBarState extends State<RidesSearchBar> {
 
   List<MapboxSuggestion> _suggestions = [];
   bool _loading = false;
+
+  Map<String, double> currentLocation = {'latitude': 0.0, 'longitude': 0.0};
+  final RideQueryStorageService _storageService = RideQueryStorageService();
 
   String get _sessionToken =>
       context.read<AuthCubit>().state is AuthAuthenticated
@@ -89,6 +94,25 @@ class _RidesSearchBarState extends State<RidesSearchBar> {
     return (screenHeight * percent).clamp(50.0, 70.0);
   }
 
+  Future<void> _getCurrentLocation() async {
+    currentLocation = await _storageService.getPickupLocation() ?? {'latitude': 0.0, 'longitude': 0.0};
+  }
+
+  Future<void> _dropoffSelectedFromMap(Location dropoff) async {
+    
+    if (mounted) {
+      context.read<RideListCubit>().updateDropoffLocation(
+        dropoff.latitude,
+        dropoff.longitude,
+      );
+
+      _addressController.text = dropoff.address ?? '';
+    }
+
+    setState(() => _suggestions = []);
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -134,7 +158,30 @@ class _RidesSearchBarState extends State<RidesSearchBar> {
                 ),
               ),
 
-              RadiusFiltersButton(),
+              IconButton(
+                icon: const Icon(Icons.map_outlined),
+                onPressed: () async {
+                  await _getCurrentLocation();
+                  if (!mounted) return;
+
+                  final result = await Navigator.push<Location>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RadarMapScreen(
+                        latitude: currentLocation['latitude']!,
+                        longitude: currentLocation['longitude']!,
+                        titleText: 'Select where you\'re going',
+                      ),
+                    ),
+                  );
+                  
+                  if (!mounted) return;
+              
+                  if (result != null) {
+                    _dropoffSelectedFromMap(result);
+                  }
+                },
+              ),
             ],
           ),
         ),

@@ -22,4 +22,5 @@ public class RideLookupDto
     public int Seats { get; set; }
     public Status Status { get; set; }
     public int AcceptedCount { get; set; }
+    public string UserStatus { get; set; } = "None";
 }

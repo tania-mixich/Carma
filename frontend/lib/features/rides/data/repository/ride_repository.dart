@@ -41,7 +41,6 @@ class RideRepository {
       return Ride.fromDetailsJson(
         response.data,
         rideId,
-        'Unknown', // TODO
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -57,6 +56,8 @@ class RideRepository {
       return Ride.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
+    } on Exception catch (e) {
+      throw 'An unexpected error occurred: $e';
     }
   }
 
@@ -79,6 +80,19 @@ class RideRepository {
         data: request.toJson(),
       );
       return Ride.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<Ride>> getRidesHistory() async {
+    try {
+      final response = await _apiClient.get(
+        '/rides/history',
+      );
+      
+      final List<dynamic> ridesJson = response.data;
+      return ridesJson.map((json) => Ride.fromJson(json)).toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }

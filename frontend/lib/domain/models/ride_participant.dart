@@ -28,57 +28,6 @@ class RideParticipant {
     this.leftAt,
   });
 
-  // For RideParticipantGetDto (simplified view in ride details)
-  factory RideParticipant.fromJson(Map<String, dynamic> json) {
-    return RideParticipant(
-      userId: '', // Not included in GetDto
-      rideId: 0, // Not included in GetDto
-      userName: json['participantName'] ?? json['userName'],
-      imageUrl: json['participantImageUrl'] ?? json['imageUrl'],
-      karma: (json['karma'] ?? 0.0).toDouble(),
-      role: ParticipantRole.fromString(json['rideRole'] ?? json['role']),
-      status: ParticipantStatus.accepted, // Assumed accepted in details view
-      requestedAt: DateTime.now(), // Not included in GetDto
-    );
-  }
-
-  // For full participant data (if you fetch it separately)
-  factory RideParticipant.fromFullJson(Map<String, dynamic> json) {
-    return RideParticipant(
-      userId: json['userId'],
-      rideId: json['rideId'],
-      userName: json['userName'],
-      imageUrl: json['imageUrl'],
-      karma: (json['karma'] ?? 0.0).toDouble(),
-      role: ParticipantRole.fromString(json['role']),
-      status: ParticipantStatus.fromString(json['status']),
-      requestedAt: DateTime.parse(json['requestedAt']),
-      acceptedAt: json['acceptedAt'] != null 
-          ? DateTime.parse(json['acceptedAt']) 
-          : null,
-      rejectedAt: json['rejectedAt'] != null 
-          ? DateTime.parse(json['rejectedAt']) 
-          : null,
-      leftAt: json['leftAt'] != null 
-          ? DateTime.parse(json['leftAt']) 
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'userId': userId,
-    'rideId': rideId,
-    'userName': userName,
-    'imageUrl': imageUrl,
-    'karma': karma,
-    'role': role.toBackendString(),
-    'status': status.toBackendString(),
-    'requestedAt': requestedAt.toIso8601String(),
-    if (acceptedAt != null) 'acceptedAt': acceptedAt!.toIso8601String(),
-    if (rejectedAt != null) 'rejectedAt': rejectedAt!.toIso8601String(),
-    if (leftAt != null) 'leftAt': leftAt!.toIso8601String(),
-  };
-
   RideParticipant copyWith({
     String? userId,
     int? rideId,
@@ -107,7 +56,7 @@ class RideParticipant {
     );
   }
 
-  // Helper getters
+
   bool get isOrganizer => role == ParticipantRole.organizer;
   bool get isPassenger => role == ParticipantRole.passenger;
   

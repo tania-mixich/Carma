@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/api/api_client.dart';
-import 'package:frontend/domain/models/ride_participant.dart';
+import 'package:frontend/features/ride_participants/data/models/ride_participant_get.dart';
 import 'package:frontend/features/ride_participants/data/models/ride_participant_update.dart';
 import 'package:frontend/features/ride_participants/data/models/ride_participant_update_self.dart';
 
@@ -10,18 +10,16 @@ class RideParticipantRepository {
   RideParticipantRepository({ApiClient? apiClient}) 
       : _apiClient = apiClient ?? ApiClient();
 
-  /// Request to join a ride
-  Future<RideParticipant> requestToJoinRide(int rideId) async {
+  Future<RideParticipantGet> requestToJoinRide(int rideId) async {
     try {
       final response = await _apiClient.post('/rides/$rideId/participants');
-      return RideParticipant.fromJson(response.data);
+      return RideParticipantGet.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Accept or reject a participant
-  Future<RideParticipant?> handleParticipant({
+  Future<RideParticipantGet?> handleParticipant({
     required int rideId,
     required String userId,
     required RideParticipantUpdate request,
@@ -36,14 +34,13 @@ class RideParticipantRepository {
         return null;
       }
       
-      return RideParticipant.fromJson(response.data);
+      return RideParticipantGet.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Accept a participant
-  Future<RideParticipant?> acceptParticipant({
+  Future<RideParticipantGet?> acceptParticipant({
     required int rideId,
     required String userId,
   }) async {
@@ -54,7 +51,6 @@ class RideParticipantRepository {
     );
   }
 
-  /// Reject a participant
   Future<void> rejectParticipant({
     required int rideId,
     required String userId,
@@ -66,7 +62,6 @@ class RideParticipantRepository {
     );
   }
 
-  /// Leave a ride (participant)
   Future<void> leaveRide(int rideId) async {
     try {
       await _apiClient.patch(
@@ -77,19 +72,6 @@ class RideParticipantRepository {
       throw _handleError(e);
     }
   }
-
-  /// Check if user can join chat
-  // Future<bool> canJoinChat(int rideId) async {
-  //   try {
-  //     final response = await _apiClient.get('/rides/$rideId/participants/can-chat');
-  //     return response.statusCode == 200;
-  //   } on DioException catch (e) {
-  //     if (e.response?.statusCode == 401 || e.response?.statusCode == 409) {
-  //       return false;
-  //     }
-  //     throw _handleError(e);
-  //   }
-  // }
 
   String _handleError(DioException error) {
     switch (error.type) {

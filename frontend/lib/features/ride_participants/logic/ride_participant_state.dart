@@ -11,11 +11,12 @@ class RideParticipantLoading extends RideParticipantState {}
 
 class RideParticipantSuccess extends RideParticipantState {
   final String message;
+  final int? rideId;
   
-  RideParticipantSuccess(this.message);
+  RideParticipantSuccess(this.message, {this.rideId});
   
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, rideId];
 }
 
 class RideParticipantError extends RideParticipantState {

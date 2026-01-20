@@ -59,7 +59,12 @@ public class RideService
                 Price = r.Price,
                 Seats = r.Seats,
                 Status = r.Status, 
-                AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted)
+                AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted),
+                UserStatus = r.OrganizerId == _currentUserService.UserId ? "Organizer" : 
+                    r.Participants
+                        .Where(p => p.UserId == _currentUserService.UserId)
+                        .Select(p => p.Status.ToString())
+                        .FirstOrDefault() ?? "None",
             })
             .OrderByDescending(r => r.PickupTime)
             .ToListAsync();
@@ -77,12 +82,12 @@ public class RideService
         if (query.DropoffLatitude.HasValue && query.DropoffLongitude.HasValue)
         {
             var destination = new Point(query.DropoffLongitude.Value, query.DropoffLatitude.Value) {SRID = 4326};
-            rides = await _rideRepository.GetNearbyRidesHeadingToTheLocationAsync(pickup, query.PickupRadius, destination, query.DropoffRadius);
+            rides = await _rideRepository.GetNearbyRidesHeadingToTheLocationAsync(pickup, query.PickupRadius, destination, query.DropoffRadius, _currentUserService.UserId);
             
         }
         else
         {
-            rides = await _rideRepository.GetNearbyRidesAsync(pickup, query.PickupRadius);
+            rides = await _rideRepository.GetNearbyRidesAsync(pickup, query.PickupRadius, _currentUserService.UserId);
         }
 
         return Result<IEnumerable<RideGetDto>>.Success(rides);
@@ -94,7 +99,7 @@ public class RideService
         var rides = await _context.Rides
             .AsNoTracking()
             .Where(r => r.Participants.Any(rp => rp.UserId == userId && rp.Status == ParticipantStatus.Accepted) 
-                        && r.Status == Status.Completed)
+                        && (r.Status == Status.Completed || r.Status == Status.InProgress))
             .OrderByDescending(r => r.PickupTime)
             .Select(r => new RideLookupDto
             {
@@ -114,7 +119,12 @@ public class RideService
                 Price = r.Price,
                 Seats = r.Seats,
                 Status = r.Status, 
-                AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted)
+                AcceptedCount = r.Participants.Count(p => p.Status == ParticipantStatus.Accepted),
+                UserStatus = r.OrganizerId == _currentUserService.UserId ? "Organizer" : 
+                    r.Participants
+                        .Where(p => p.UserId == _currentUserService.UserId)
+                        .Select(p => p.Status.ToString())
+                        .FirstOrDefault() ?? "None",
             })
             .ToListAsync();
 
@@ -270,7 +280,8 @@ public class RideService
             ride.PickupTime,
             ride.Price,
             ride.Seats,
-            ride.Status.ToString()
+            ride.Status.ToString(),
+            "Organizer"
             )
         );
     }
@@ -339,7 +350,8 @@ public class RideService
             ride.PickupTime,
             acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
             ride.Seats - acceptedCount,
-            ride.Status.ToString()
+            ride.Status.ToString(),
+            "Organizer"
             )
         );
     }
@@ -451,7 +463,8 @@ public class RideService
             ride.PickupTime,
             acceptedCount > 0 ? ride.Price / acceptedCount : ride.Price,
             ride.Seats - acceptedCount,
-            ride.Status.ToString()
+            ride.Status.ToString(),
+            "Organizer"
             )
         );
     }

@@ -1,6 +1,6 @@
 import 'package:frontend/domain/enums/status.dart';
 import 'package:frontend/domain/models/location.dart';
-import 'package:frontend/domain/models/ride_participant.dart';
+import 'package:frontend/features/ride_participants/data/models/ride_participant_get.dart';
 
 class Ride {
   final int id;
@@ -13,7 +13,8 @@ class Ride {
   final double pricePerSeat;
   final int availableSeats;
   final Status status;
-  final List<RideParticipant>? participants;
+  final List<RideParticipantGet>? participants;
+  final String? userStatus;
 
   Ride({
     required this.id,
@@ -27,10 +28,10 @@ class Ride {
     required this.availableSeats,
     required this.status,
     this.participants,
+    this.userStatus,
   });
 
   // For RideGetDto
-  // TODO: pass location address from backend, to avoid extra requests in fe - same for details
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
       id: json['id'],
@@ -44,39 +45,29 @@ class Ride {
       pricePerSeat: (json['pricePerSeat'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,
       status: Status.fromString(json['status']),
+      userStatus: json['userStatus'],
     );
   }
 
   // For RideDetailsDto
-  // TODO: pass organizerName, rating, image to get from participants
-  factory Ride.fromDetailsJson(Map<String, dynamic> json, int id, String organizerName) {
+  // TODO: get rating, image (for each participant) from participants list in fe
+  factory Ride.fromDetailsJson(Map<String, dynamic> json, int id) {
+    List<RideParticipantGet>? rideParticipants = (json['participants'] as List?)
+        ?.map((p) => RideParticipantGet.fromJson(p))
+        .toList();
+
     return Ride(
       id: id,
-      organizerName: organizerName,
+      organizerName: rideParticipants?.firstWhere((p) => p.isOrganizer).name ?? "Unknown",
       pickupLocation: Location.fromGetJson(json['pickupLocation']),
       dropOffLocation: Location.fromGetJson(json['dropOffLocation']),
       pickupTime: DateTime.parse(json['pickupTime']),
       pricePerSeat: (json['price'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,
       status: Status.fromString(json['status']),
-      participants: (json['participants'] as List?)
-          ?.map((p) => RideParticipant.fromJson(p))
-          .toList(),
+      participants: rideParticipants,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'organizerName': organizerName,
-    'pickupLocation': pickupLocation.toJson(),
-    'dropOffLocation': dropOffLocation.toJson(),
-    'pickupTime': pickupTime.toIso8601String(),
-    'pricePerSeat': pricePerSeat,
-    'availableSeats': availableSeats,
-    'status': status.toBackendString(),
-    if (participants != null)
-      'participants': participants!.map((p) => p.toJson()).toList(),
-  };
 
   Ride copyWith({
     int? id,
@@ -87,7 +78,8 @@ class Ride {
     double? pricePerSeat,
     int? availableSeats,
     Status? status,
-    List<RideParticipant>? participants,
+    List<RideParticipantGet>? participants,
+    String? userStatus,
   }) {
     return Ride(
       id: id ?? this.id,
@@ -99,6 +91,7 @@ class Ride {
       availableSeats: availableSeats ?? this.availableSeats,
       status: status ?? this.status,
       participants: participants ?? this.participants,
+      userStatus: userStatus ?? this.userStatus,
     );
   }
 
@@ -110,6 +103,6 @@ class Ride {
   
   bool get hasSeatsAvailable => availableSeats > 0;
     
-  RideParticipant? get organizer => 
-      participants?.firstWhere((p) => p.isOrganizer, orElse: () => participants!.first);
+  RideParticipantGet? get organizer => 
+      participants?.firstWhere((p) => p.isOrganizer);
 }

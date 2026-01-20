@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_radar/flutter_radar.dart';
 import 'package:geolocator/geolocator.dart';
+//import 'package:geolocator/geolocator.dart';
 
 class RideQueryStorageService {
   
@@ -43,10 +44,16 @@ class RideQueryStorageService {
       };
     }
 
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high)
-    );
-    print('POSITION FROM GEOLOCATOR: $pos');
+    try {
+      await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      print("Geolocator warmup timed out, but sensors are now awake.");
+    }
 
     var status = await Radar.getPermissionsStatus();
     print('RADAR PERMISSION STATUS: $status');

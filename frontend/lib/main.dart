@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/features/auth/logic/auth_cubit.dart';
-import 'package:frontend/features/auth/presentation/screens/auth_screen.dart';
-import 'package:frontend/features/home/presentation/screens/home_screen.dart';
+import 'package:frontend/features/auth/presentation/auth_screen.dart';
+import 'package:frontend/features/home/presentation/home_screen.dart';
 import 'package:flutter_radar/flutter_radar.dart';
+import 'package:frontend/shared/widgets/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,7 +58,7 @@ class AuthWrapper extends StatelessWidget {
           );
         } else if (state is AuthAuthenticated) {
           Radar.setUserId(state.user.id);
-          return const HomeScreen();
+          return const MainNavigationScreen();
         } else {
           return const AuthScreen();
         }
