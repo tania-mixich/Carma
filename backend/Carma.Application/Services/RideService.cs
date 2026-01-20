@@ -150,6 +150,7 @@ public class RideService
                 Participants = r.Participants.Where(rp => rp.Status == ParticipantStatus.Accepted)
                     .Select(rp => new
                     {
+                        rp.UserId,
                         rp.User.UserName,
                         rp.User.ImageUrl,
                         rp.User.Karma,
@@ -187,11 +188,12 @@ public class RideService
             ride.Status.ToString(),
             ride.Participants
                 .Select(rp => new RideParticipantGetDto(
-                rp.UserName ?? string.Empty,
-                rp.ImageUrl,
-                rp.Karma,
-                rp.Role.ToString()
-                ))
+                    rp.UserId,
+                    rp.UserName ?? string.Empty,
+                    rp.ImageUrl,
+                    rp.Karma,
+                    rp.Role.ToString()
+                    ))
                 .ToList()
             );
         return Result<RideDetailsDto>.Success(rideDto);

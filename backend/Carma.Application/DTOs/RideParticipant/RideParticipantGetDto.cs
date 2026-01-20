@@ -3,6 +3,7 @@
 namespace Carma.Application.DTOs.RideParticipant;
 
 public record RideParticipantGetDto(
+    Guid UserId,
     string ParticipantName,
     string? ParticipantImageUrl,
     double Karma,

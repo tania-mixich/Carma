@@ -22,6 +22,42 @@ public class RideParticipantService
         _realTimeNotifier = realTimeNotifier;
     }
 
+    public async Task<Result<List<RideParticipantGetDto>>> GetPendingParticipantsAsync(int rideId)
+    {
+        var userId = _currentUserService.UserId;
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return Result<List<RideParticipantGetDto>>.NotFound("User not found");
+        }
+
+        var ride = await _context.Rides.FindAsync(rideId);
+        if (ride == null)
+        {
+            return Result<List<RideParticipantGetDto>>.NotFound("Ride not found");
+        }
+
+        if (ride.OrganizerId != userId)
+        {
+            return Result<List<RideParticipantGetDto>>.Unauthorized("You are not the organizer of the ride");
+        }
+
+        var pendingParticipants = await _context.RideParticipants
+            .Where(rp => rp.RideId == rideId && rp.Status == ParticipantStatus.Pending)
+            .Select(rp => new RideParticipantGetDto(
+                rp.User.Id,
+                rp.User.UserName ?? string.Empty,
+                rp.User.ImageUrl ?? string.Empty,
+                rp.User.Karma,
+                rp.Role.ToString()
+                ))
+            .ToListAsync();
+        
+        return Result<List<RideParticipantGetDto>>.Success(pendingParticipants);
+
+    }
+
     public async Task<Result<RideParticipantGetDto>> RequestToJoinRideAsync(int rideId)
     {
         var userId = _currentUserService.UserId;
@@ -99,6 +135,7 @@ public class RideParticipantService
         
         return Result<RideParticipantGetDto>.Success(
             new RideParticipantGetDto(
+                user.Id,
                 user.UserName ?? string.Empty,
                 user.ImageUrl,
                 user.Karma,
@@ -197,6 +234,7 @@ public class RideParticipantService
         }
 
         return Result<RideParticipantGetDto?>.Success(new RideParticipantGetDto(
+            participant.User.Id,
             participant.User.UserName ?? string.Empty, 
             participant.User.ImageUrl, 
             participant.User.Karma, 

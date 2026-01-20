@@ -18,6 +18,13 @@ public class RideParticipantController : ControllerBase
         _rideParticipantService = rideParticipantService;
     }
 
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPendingParticipants(int rideId)
+    {
+        var result = await _rideParticipantService.GetPendingParticipantsAsync(rideId);
+        return result.ToActionResult();
+    }
+    
     [HttpPost]
     public async Task<IActionResult> RequestToJoin(int rideId)
     {
