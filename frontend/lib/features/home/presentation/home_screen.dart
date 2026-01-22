@@ -19,11 +19,8 @@ class HomeScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => RideListCubit()..initialize()),
-        BlocProvider(create: (context) => RideParticipantCubit()),
-      ],
+    return BlocProvider(
+      create: (context) => RideListCubit()..initialize(),
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = state is AuthAuthenticated ? state.user : null;

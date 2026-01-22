@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/features/chat/presentation/ride_chat_screen.dart';
+import 'package:frontend/features/ride_participants/logic/ride_participant_cubit.dart';
 import 'package:frontend/features/rides/presentation/ride_details_screen.dart';
 import 'package:frontend/shared/widgets/join_ride_button.dart';
 
@@ -37,7 +40,13 @@ class RideCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RideDetailsScreen(rideId: id, userStatus: userStatus),
+        builder: (_) => BlocProvider.value(
+          value: context.read<RideParticipantCubit>(),
+          child: RideDetailsScreen(
+            rideId: id,
+            userStatus: userStatus,
+          ),
+        ),
       ),
     );
   }
@@ -143,7 +152,13 @@ class RideCard extends StatelessWidget {
                   Expanded(
                     child: joinRideButton(
                       userStatus: userStatus ?? "None",
-                      onJoinPressed: onJoinPressed
+                      onJoinPressed: onJoinPressed,
+                      onChatPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => RideChatScreen(rideId: id)),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 10),

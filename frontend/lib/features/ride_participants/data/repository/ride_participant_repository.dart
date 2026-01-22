@@ -19,6 +19,18 @@ class RideParticipantRepository {
     }
   }
 
+  Future<List<RideParticipantGet>> getPendingParticipants(int rideId) async {
+    try {
+      final response = await _apiClient.get('/rides/$rideId/participants/pending');
+      final participants = (response.data as List)
+          .map((json) => RideParticipantGet.fromJson(json))
+          .toList();
+      return participants;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<RideParticipantGet?> handleParticipant({
     required int rideId,
     required String userId,
@@ -30,7 +42,7 @@ class RideParticipantRepository {
         data: request.toJson(),
       );
       
-      if (response.data == null) {
+      if (response.data == null || response.data is! Map) {
         return null;
       }
       
@@ -84,6 +96,9 @@ class RideParticipantRepository {
         final statusCode = error.response?.statusCode;
         final data = error.response?.data;
 
+        if (data is String && data.isNotEmpty) {
+          return data;
+        }
         if (statusCode == 400) {
           if (data is Map && data.containsKey('errors')) {
             final errors = data['errors'] as Map;
@@ -103,6 +118,13 @@ class RideParticipantRepository {
         } else if (statusCode == 409) {
           if (data is Map && data.containsKey('message')) {
             return data['message'] as String;
+          }
+          if (data.containsKey('errors')) {
+            final errors = data['errors'] as Map;
+            final firstError = errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              return firstError[0] as String;
+            }
           }
           return 'Conflict. Cannot complete this action.';
         }

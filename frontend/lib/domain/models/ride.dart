@@ -41,7 +41,7 @@ class Ride {
                 ? "https://i.imgur.com/BoN9kdC.png" : json['imageUrl'],
       pickupLocation: Location.fromGetJson(json['pickupLocation']),
       dropOffLocation: Location.fromGetJson(json['dropOffLocation']),
-      pickupTime: DateTime.parse(json['pickupTime']),
+      pickupTime: DateTime.parse(json['pickupTime']).toLocal(),
       pricePerSeat: (json['pricePerSeat'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,
       status: Status.fromString(json['status']),
@@ -50,7 +50,6 @@ class Ride {
   }
 
   // For RideDetailsDto
-  // TODO: get rating, image (for each participant) from participants list in fe
   factory Ride.fromDetailsJson(Map<String, dynamic> json, int id) {
     List<RideParticipantGet>? rideParticipants = (json['participants'] as List?)
         ?.map((p) => RideParticipantGet.fromJson(p))
@@ -61,7 +60,7 @@ class Ride {
       organizerName: rideParticipants?.firstWhere((p) => p.isOrganizer).name ?? "Unknown",
       pickupLocation: Location.fromGetJson(json['pickupLocation']),
       dropOffLocation: Location.fromGetJson(json['dropOffLocation']),
-      pickupTime: DateTime.parse(json['pickupTime']),
+      pickupTime: DateTime.parse(json['pickupTime']).toLocal(),
       pricePerSeat: (json['price'] ?? 0.0).toDouble(),
       availableSeats: json['availableSeats'] ?? 0,
       status: Status.fromString(json['status']),

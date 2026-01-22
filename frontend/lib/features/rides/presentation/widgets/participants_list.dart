@@ -14,9 +14,7 @@ Widget participantsList(Ride ride) {
       final participant = ride.participants![index];
       final isOrganizer = participant.isOrganizer;
 
-      final bgColor = isOrganizer
-          ? const Color.fromARGB(94, 243, 227, 211)
-          : const Color.fromARGB(169, 229, 223, 213);
+      final bgColor = const Color.fromARGB(94, 243, 236, 211);
 
       final roleColor = isOrganizer
           ? Colors.deepOrange

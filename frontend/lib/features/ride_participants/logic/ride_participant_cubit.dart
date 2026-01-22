@@ -21,6 +21,16 @@ class RideParticipantCubit extends Cubit<RideParticipantState> {
     }
   }
 
+  Future<void> fetchPendingParticipants(int rideId) async {
+    emit(RideParticipantLoading());
+    try {
+      final participants = await _repository.getPendingParticipants(rideId);
+      emit(RideParticipantLoaded(participants));
+    } catch (e) {
+      emit(RideParticipantError(e.toString()));
+    }
+  }
+
   Future<void> acceptParticipant(int rideId, String userId) async {
     emit(RideParticipantLoading());
     
@@ -53,14 +63,6 @@ class RideParticipantCubit extends Cubit<RideParticipantState> {
       emit(RideParticipantError(e.toString()));
     }
   }
-
-  // Future<bool> canJoinChat(int rideId) async {
-  //   try {
-  //     return await _repository.canJoinChat(rideId);
-  //   } catch (e) {
-  //     return false;
-  //   }
-  // }
 
   void reset() {
     emit(RideParticipantInitial());

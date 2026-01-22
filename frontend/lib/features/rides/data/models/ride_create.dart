@@ -18,7 +18,7 @@ class RideCreate {
   Map<String, dynamic> toJson() => {
     'pickupLocation': pickupLocation.toJson(),
     'dropOffLocation': dropOffLocation.toJson(),
-    'pickupTime': pickupTime.toIso8601String(),
+    'pickupTime': pickupTime.toUtc().toIso8601String(),
     'price': price,
     'availableSeats': availableSeats,
   };

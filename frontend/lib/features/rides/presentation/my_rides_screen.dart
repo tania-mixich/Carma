@@ -91,7 +91,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 20),
                             child: Text(
-                              "Your Rides History",
+                              "Your Rides",
                               style: TextStyle(
                                 fontSize: screenWidth * 0.06,
                                 fontWeight: FontWeight.bold,

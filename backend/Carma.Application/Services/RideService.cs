@@ -99,7 +99,7 @@ public class RideService
         var rides = await _context.Rides
             .AsNoTracking()
             .Where(r => r.Participants.Any(rp => rp.UserId == userId && rp.Status == ParticipantStatus.Accepted) 
-                        && (r.Status == Status.Completed || r.Status == Status.InProgress))
+                        && (r.Status == Status.Completed || r.Status == Status.InProgress || r.Status == Status.Full || r.Status == Status.Available))
             .OrderByDescending(r => r.PickupTime)
             .Select(r => new RideLookupDto
             {

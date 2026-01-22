@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/features/home/presentation/home_screen.dart';
+import 'package:frontend/features/ride_participants/logic/ride_participant_cubit.dart';
 import 'package:frontend/features/rides/logic/my_rides_cubit.dart';
 import 'package:frontend/features/rides/presentation/my_rides_screen.dart';
 
@@ -30,6 +31,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => MyRidesCubit()),
+        BlocProvider(create: (context) => RideParticipantCubit()),
       ],
       child: Scaffold(
         body: IndexedStack(
